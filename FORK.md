@@ -17,7 +17,8 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `server/src/nsfw/nsfw.ts` | Scorer, threshold, constants |
 | `server/src/nsfw/laion-clip-b32.weights.ts`, `nsfw.fixture.json` | Generated weights and test fixture |
 | `server/src/nsfw/nsfw.spec.ts` | Scorer tests |
-| `server/src/services/nsfw.service.ts`, `nsfw.service.spec.ts` | NSFW Detection queue handlers |
+| `server/src/services/nsfw.service.ts`, `nsfw.service.spec.ts` | NSFW Detection queue handlers; warns at startup on invalid `IMMICH_NSFW_THRESHOLD` |
+| `server/src/nsfw/nsfw.sql.ts` | `isNsfwAsset(threshold)` SQL fragment (tolerates malformed metadata) |
 
 ## Immich files modified
 
@@ -30,6 +31,9 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `server/src/services/job.service.ts` | After `SmartSearch`, queue `AssetDetectNsfw` with `force: true` (one line) |
 | `server/src/services/index.ts` | Register `NsfwService` |
 | `server/src/services/job.service.spec.ts`, `queue.service.spec.ts` | Expectations for the extra chained job / extra queue |
+| `server/src/dtos/time-bucket.dto.ts` | Query param `withoutNsfw`; response column `isNsfw` |
+| `server/src/repositories/asset.repository.ts` | Import + `withoutNsfw` option + filter in `getTimeBuckets`/`getTimeBucket` + `isNsfw` column (threshold read here, so `timeline.service.ts` is untouched) |
+| `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)
 

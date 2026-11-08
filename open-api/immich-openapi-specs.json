@@ -16704,6 +16704,15 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "withoutNsfw",
+            "required": false,
+            "in": "query",
+            "description": "Exclude assets classified as NSFW",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -16890,6 +16899,15 @@
             "required": false,
             "in": "query",
             "description": "Include stacked assets in the response. When true, only primary assets from stacks are returned.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "withoutNsfw",
+            "required": false,
+            "in": "query",
+            "description": "Exclude assets classified as NSFW",
             "schema": {
               "type": "boolean"
             }
@@ -23204,6 +23222,8 @@
           "AssetDetectFaces",
           "AssetDetectDuplicatesQueueAll",
           "AssetDetectDuplicates",
+          "AssetDetectNsfwQueueAll",
+          "AssetDetectNsfw",
           "AssetEditThumbnailGeneration",
           "AssetEncodeVideoQueueAll",
           "AssetEncodeVideo",
@@ -26780,7 +26800,8 @@
           "ocr",
           "workflow",
           "integrityCheck",
-          "editor"
+          "editor",
+          "nsfwDetection"
         ],
         "type": "string"
       },
@@ -26945,6 +26966,9 @@
           "notifications": {
             "$ref": "#/components/schemas/QueueResponseLegacyDto"
           },
+          "nsfwDetection": {
+            "$ref": "#/components/schemas/QueueResponseLegacyDto"
+          },
           "ocr": {
             "$ref": "#/components/schemas/QueueResponseLegacyDto"
           },
@@ -26982,6 +27006,7 @@
           "metadataExtraction",
           "migration",
           "notifications",
+          "nsfwDetection",
           "ocr",
           "search",
           "sidecar",
@@ -33077,6 +33102,13 @@
             },
             "type": "array"
           },
+          "isNsfw": {
+            "description": "Array indicating whether each asset is classified as NSFW",
+            "items": {
+              "type": "boolean"
+            },
+            "type": "array"
+          },
           "isTrashed": {
             "description": "Array indicating whether each asset is in the trash",
             "items": {
@@ -33177,6 +33209,7 @@
           "id",
           "isFavorite",
           "isImage",
+          "isNsfw",
           "isTrashed",
           "livePhotoVideoId",
           "localOffsetHours",
