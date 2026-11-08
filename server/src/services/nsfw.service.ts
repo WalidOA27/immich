@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { JobOf } from 'src/types.js';
-import { OnJob } from 'src/decorators.js';
+import { OnEvent, OnJob } from 'src/decorators.js';
 import { SystemConfig } from 'src/dtos/config.dto.js';
 import { AssetType, AssetVisibility, JobName, JobStatus, QueueName } from 'src/enum.js';
 import {
@@ -10,6 +10,7 @@ import {
   NSFW_MODEL,
   NSFW_VERSION,
   NsfwMetadata,
+  getNsfwThreshold,
   parseEmbedding,
   scoreNsfw,
 } from 'src/nsfw/nsfw.js';
@@ -34,6 +35,13 @@ export class NsfwService extends BaseService {
       return false;
     }
     return true;
+  }
+
+  @OnEvent({ name: 'AppBootstrap' })
+  onBootstrap() {
+    getNsfwThreshold(process.env, (raw) =>
+      this.logger.warn(`Invalid IMMICH_NSFW_THRESHOLD "${raw}", using the default`),
+    );
   }
 
   @OnJob({ name: JobName.AssetDetectNsfwQueueAll, queue: QueueName.NsfwDetection })
