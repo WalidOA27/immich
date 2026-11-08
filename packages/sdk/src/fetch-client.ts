@@ -1808,6 +1808,7 @@ export type QueuesResponseLegacyDto = {
     metadataExtraction: QueueResponseLegacyDto;
     migration: QueueResponseLegacyDto;
     notifications: QueueResponseLegacyDto;
+    nsfwDetection: QueueResponseLegacyDto;
     ocr: QueueResponseLegacyDto;
     search: QueueResponseLegacyDto;
     sidecar: QueueResponseLegacyDto;
@@ -3239,6 +3240,8 @@ export type TimeBucketAssetResponseDto = {
     isFavorite: boolean[];
     /** Array indicating whether each asset is an image (false for videos) */
     isImage: boolean[];
+    /** Array indicating whether each asset is classified as NSFW */
+    isNsfw: boolean[];
     /** Array indicating whether each asset is in the trash */
     isTrashed: boolean[];
     /** Array of latitude coordinates extracted from EXIF GPS data */
@@ -7674,7 +7677,7 @@ export function tagAssets({ id, bulkIdsDto }: {
 /**
  * Get time bucket
  */
-export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, timeBucket, userId, visibility, withCoordinates, withPartners, withStacked }: {
+export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, timeBucket, userId, visibility, withCoordinates, withPartners, withStacked, withoutNsfw }: {
     albumId?: string;
     bbox?: string;
     isFavorite?: boolean;
@@ -7691,6 +7694,7 @@ export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order
     withCoordinates?: boolean;
     withPartners?: boolean;
     withStacked?: boolean;
+    withoutNsfw?: boolean;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
@@ -7711,7 +7715,8 @@ export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order
         visibility,
         withCoordinates,
         withPartners,
-        withStacked
+        withStacked,
+        withoutNsfw
     }))}`, {
         ...opts
     }));
@@ -7719,7 +7724,7 @@ export function getTimeBucket({ albumId, bbox, isFavorite, isTrashed, key, order
 /**
  * Get time buckets
  */
-export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, userId, visibility, withCoordinates, withPartners, withStacked }: {
+export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, order, orderBy, personId, slug, tagId, userId, visibility, withCoordinates, withPartners, withStacked, withoutNsfw }: {
     albumId?: string;
     bbox?: string;
     isFavorite?: boolean;
@@ -7735,6 +7740,7 @@ export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, orde
     withCoordinates?: boolean;
     withPartners?: boolean;
     withStacked?: boolean;
+    withoutNsfw?: boolean;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
@@ -7754,7 +7760,8 @@ export function getTimeBuckets({ albumId, bbox, isFavorite, isTrashed, key, orde
         visibility,
         withCoordinates,
         withPartners,
-        withStacked
+        withStacked,
+        withoutNsfw
     }))}`, {
         ...opts
     }));
@@ -8581,7 +8588,8 @@ export enum QueueName {
     Ocr = "ocr",
     Workflow = "workflow",
     IntegrityCheck = "integrityCheck",
-    Editor = "editor"
+    Editor = "editor",
+    NsfwDetection = "nsfwDetection"
 }
 export enum QueueCommand {
     Start = "start",
@@ -8634,6 +8642,8 @@ export enum JobName {
     AssetDetectFaces = "AssetDetectFaces",
     AssetDetectDuplicatesQueueAll = "AssetDetectDuplicatesQueueAll",
     AssetDetectDuplicates = "AssetDetectDuplicates",
+    AssetDetectNsfwQueueAll = "AssetDetectNsfwQueueAll",
+    AssetDetectNsfw = "AssetDetectNsfw",
     AssetEditThumbnailGeneration = "AssetEditThumbnailGeneration",
     AssetEncodeVideoQueueAll = "AssetEncodeVideoQueueAll",
     AssetEncodeVideo = "AssetEncodeVideo",
