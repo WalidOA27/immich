@@ -136,6 +136,7 @@ describe(TimelineService.name, () => {
         id: [],
         visibility: [],
         isFavorite: [],
+        isNsfw: [],
         isImage: [],
         isTrashed: [],
         livePhotoVideoId: [],
@@ -248,5 +249,54 @@ describe(TimelineService.name, () => {
     const rawResponse = await sut.getTimeBucket(auth, { albumId: album.id, timeBucket: '1970-02-01', isTrashed: true });
     const response = JSON.parse(rawResponse);
     expect(response).not.toEqual(expect.objectContaining({ city: expect.any(Array), country: expect.any(Array) }));
+  });
+});
+
+const setupNsfw = async () => {
+  const { sut, ctx } = setup();
+  const { user } = await ctx.newUser();
+  const auth = factory.auth({ user });
+  const ids: Record<string, string> = {};
+  const scores: Record<string, unknown> = { high: 0.9, low: 0.2, none: undefined, malformed: 'mucho' };
+  for (const [name, score] of Object.entries(scores)) {
+    const { asset } = await ctx.newAsset({ ownerId: user.id, localDateTime: new Date('1970-02-10') });
+    await ctx.newExif({ assetId: asset.id, make: 'Canon' });
+    if (name !== 'none') {
+      await ctx.newMetadata({ assetId: asset.id, key: 'nsfw', value: { score, model: 'laion-clip-b32', v: 1 } });
+    }
+    ids[name] = asset.id;
+  }
+  return { sut, auth, ids };
+};
+
+const byId = (response: { id: string[]; isNsfw: boolean[] }) =>
+  Object.fromEntries(response.id.map((id, i) => [id, response.isNsfw[i]]));
+
+describe('nsfw (fork)', () => {
+  afterEach(() => {
+    delete process.env.IMMICH_NSFW_THRESHOLD;
+  });
+
+  it('marks assets at or above the threshold as NSFW, tolerating malformed metadata', async () => {
+    const { sut, auth, ids } = await setupNsfw();
+    const response = JSON.parse(await sut.getTimeBucket(auth, { timeBucket: '1970-02-01' }));
+    expect(byId(response)).toEqual({ [ids.high]: true, [ids.low]: false, [ids.none]: false, [ids.malformed]: false });
+  });
+
+  it('uses IMMICH_NSFW_THRESHOLD', async () => {
+    process.env.IMMICH_NSFW_THRESHOLD = '0.1';
+    const { sut, auth, ids } = await setupNsfw();
+    const response = JSON.parse(await sut.getTimeBucket(auth, { timeBucket: '1970-02-01' }));
+    expect(byId(response)[ids.low]).toBe(true);
+  });
+
+  it('excludes NSFW assets from both bucket counts and bucket contents', async () => {
+    const { sut, auth, ids } = await setupNsfw();
+    await expect(sut.getTimeBuckets(auth, { withoutNsfw: true })).resolves.toEqual([
+      { count: 3, timeBucket: '1970-02-01' },
+    ]);
+    const response = JSON.parse(await sut.getTimeBucket(auth, { timeBucket: '1970-02-01', withoutNsfw: true }));
+    expect(response.id).toHaveLength(3);
+    expect(response.id).not.toContain(ids.high);
   });
 });

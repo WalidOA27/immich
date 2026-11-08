@@ -20,6 +20,7 @@ const TimeBucketQueryBaseSchema = z
       .optional()
       .describe('Include stacked assets in the response. When true, only primary assets from stacks are returned.'),
     withPartners: stringToBool.optional().describe('Include assets shared by partners'),
+    withoutNsfw: stringToBool.optional().describe('Exclude assets classified as NSFW'),
     order: AssetOrderSchema.optional().describe(
       'Sort order for assets within time buckets (ASC for oldest first, DESC for newest first)',
     ),
@@ -86,6 +87,7 @@ const TimeBucketAssetResponseSchema = z
       .array(AssetVisibilitySchema)
       .describe('Array of visibility statuses for each asset (e.g., ARCHIVE, TIMELINE, HIDDEN, LOCKED)'),
     isTrashed: z.array(z.boolean()).describe('Array indicating whether each asset is in the trash'),
+    isNsfw: z.array(z.boolean()).describe('Array indicating whether each asset is classified as NSFW'),
     isImage: z.array(z.boolean()).describe('Array indicating whether each asset is an image (false for videos)'),
     thumbhash: z
       .array(z.string().nullable())

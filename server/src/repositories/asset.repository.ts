@@ -26,6 +26,8 @@ import {
   AssetVisibility,
   CalendarHeatmapType,
 } from 'src/enum.js';
+import { getNsfwThreshold } from 'src/nsfw/nsfw.js';
+import { isNsfwAsset } from 'src/nsfw/nsfw.sql.js';
 import { DB } from 'src/schema/index.js';
 import { AssetAudioTable, AssetKeyframeTable, AssetVideoTable } from 'src/schema/tables/asset-av.table.js';
 import { AssetExifTable } from 'src/schema/tables/asset-exif.table.js';
@@ -83,6 +85,7 @@ interface AssetBuilderOptions {
   isFavorite?: boolean;
   isTrashed?: boolean;
   isDuplicate?: boolean;
+  withoutNsfw?: boolean;
   albumId?: string;
   tagId?: string;
   personId?: string;
@@ -799,6 +802,7 @@ export class AssetRepository {
           .$if(options.isDuplicate !== undefined, (qb) =>
             qb.where('asset.duplicateId', options.isDuplicate ? 'is not' : 'is', null),
           )
+          .$if(!!options.withoutNsfw, (qb) => qb.where((eb) => eb.not(isNsfwAsset(getNsfwThreshold()))))
           .$if(!!options.tagId, (qb) => withTagId(qb, options.tagId!)),
       )
       .selectFrom('asset')
@@ -826,6 +830,7 @@ export class AssetRepository {
             sql`asset."isFavorite" and asset."ownerId" = ${auth.user.id}`.as('isFavorite'),
             sql`asset.type = 'IMAGE'`.as('isImage'),
             sql`asset."deletedAt" is not null`.as('isTrashed'),
+            isNsfwAsset(getNsfwThreshold()).as('isNsfw'),
             'asset.livePhotoVideoId',
             sql`extract(epoch from (asset."localDateTime" AT TIME ZONE 'UTC' - asset."fileCreatedAt" at time zone 'UTC'))::real / 3600`.as(
               'localOffsetHours',
@@ -916,6 +921,7 @@ export class AssetRepository {
           .$if(options.isDuplicate !== undefined, (qb) =>
             qb.where('asset.duplicateId', options.isDuplicate ? 'is not' : 'is', null),
           )
+          .$if(!!options.withoutNsfw, (qb) => qb.where((eb) => eb.not(isNsfwAsset(getNsfwThreshold()))))
           .$if(!!options.isTrashed, (qb) => qb.where('asset.status', '!=', AssetStatus.Deleted))
           .$if(!!options.tagId, (qb) => withTagId(qb, options.tagId!))
           .orderBy(
@@ -938,6 +944,7 @@ export class AssetRepository {
             eb.fn.coalesce(eb.fn('array_agg', ['isImage']), sql.lit('{}')).as('isImage'),
             // TODO: isTrashed is redundant as it will always be all true or false depending on the options
             eb.fn.coalesce(eb.fn('array_agg', ['isTrashed']), sql.lit('{}')).as('isTrashed'),
+            eb.fn.coalesce(eb.fn('array_agg', ['isNsfw']), sql.lit('{}')).as('isNsfw'),
             eb.fn.coalesce(eb.fn('array_agg', ['livePhotoVideoId']), sql.lit('{}')).as('livePhotoVideoId'),
             eb.fn.coalesce(eb.fn('array_agg', ['fileCreatedAt']), sql.lit('{}')).as('fileCreatedAt'),
             eb.fn.coalesce(eb.fn('array_agg', ['localOffsetHours']), sql.lit('{}')).as('localOffsetHours'),

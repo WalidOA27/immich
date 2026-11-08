@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vitest } from 'vitest';
 import { DEFAULT_NSFW_THRESHOLD, getNsfwThreshold, parseEmbedding, scoreNsfw } from 'src/nsfw/nsfw.js';
 
 const fixture = JSON.parse(readFileSync(new URL('nsfw.fixture.json', import.meta.url), 'utf8')) as {
@@ -41,5 +41,22 @@ describe('getNsfwThreshold', () => {
 
   it.each(['abc', '-1', '2', '', ' '])('falls back to the default for invalid value %j', (value) => {
     expect(getNsfwThreshold({ IMMICH_NSFW_THRESHOLD: value })).toBe(0.5);
+  });
+});
+
+describe('getNsfwThreshold warnings', () => {
+  it('reports an invalid value once', () => {
+    const onInvalid = vitest.fn();
+    getNsfwThreshold({ IMMICH_NSFW_THRESHOLD: 'nope' }, onInvalid);
+    getNsfwThreshold({ IMMICH_NSFW_THRESHOLD: 'nope' }, onInvalid);
+    expect(onInvalid).toHaveBeenCalledTimes(1);
+    expect(onInvalid).toHaveBeenCalledWith('nope');
+  });
+
+  it('does not report valid or unset values', () => {
+    const onInvalid = vitest.fn();
+    getNsfwThreshold({ IMMICH_NSFW_THRESHOLD: '0.7' }, onInvalid);
+    getNsfwThreshold({}, onInvalid);
+    expect(onInvalid).not.toHaveBeenCalled();
   });
 });

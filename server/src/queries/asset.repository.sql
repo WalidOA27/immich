@@ -388,6 +388,17 @@ with
       and asset."ownerId" = $1 as "isFavorite",
       asset.type = 'IMAGE' as "isImage",
       asset."deletedAt" is not null as "isTrashed",
+      exists (
+        select
+          1
+        from
+          asset_metadata nsfw_meta
+        where
+          nsfw_meta."assetId" = asset.id
+          and nsfw_meta.key = $2
+          and jsonb_typeof(nsfw_meta.value -> 'score') = 'number'
+          and (nsfw_meta.value ->> 'score')::real >= $3
+      ) as "isNsfw",
       "asset"."livePhotoVideoId",
       extract(
         epoch
@@ -427,14 +438,14 @@ with
         where
           "stacked"."stackId" = "asset"."stackId"
           and "stacked"."deletedAt" is null
-          and "stacked"."visibility" = $2
+          and "stacked"."visibility" = $4
         group by
           "stacked"."stackId"
       ) as "stacked_assets" on true
     where
       "asset"."deletedAt" is null
       and "asset"."visibility" in ('archive', 'timeline')
-      and date_trunc('MONTH', "localDateTime" AT TIME ZONE 'UTC') AT TIME ZONE 'UTC' = $3
+      and date_trunc('MONTH', "localDateTime" AT TIME ZONE 'UTC') AT TIME ZONE 'UTC' = $5
       and not exists (
         select
         from
@@ -456,6 +467,7 @@ with
       coalesce(array_agg("isFavorite"), '{}') as "isFavorite",
       coalesce(array_agg("isImage"), '{}') as "isImage",
       coalesce(array_agg("isTrashed"), '{}') as "isTrashed",
+      coalesce(array_agg("isNsfw"), '{}') as "isNsfw",
       coalesce(array_agg("livePhotoVideoId"), '{}') as "livePhotoVideoId",
       coalesce(array_agg("fileCreatedAt"), '{}') as "fileCreatedAt",
       coalesce(array_agg("localOffsetHours"), '{}') as "localOffsetHours",

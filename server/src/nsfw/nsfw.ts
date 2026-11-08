@@ -64,12 +64,24 @@ export const scoreNsfw = (embedding: Float32Array): number => {
   return 1 / (1 + Math.exp(-logit));
 };
 
-/** Reads IMMICH_NSFW_THRESHOLD; invalid or out-of-range values fall back to the default. */
-export const getNsfwThreshold = (env: NodeJS.ProcessEnv = process.env): number => {
+const reportedInvalid = new Set<string>();
+
+/**
+ * Reads IMMICH_NSFW_THRESHOLD; invalid or out-of-range values fall back to the default.
+ * `onInvalid` is called once per distinct invalid value (for a log warning).
+ */
+export const getNsfwThreshold = (env: NodeJS.ProcessEnv = process.env, onInvalid?: (raw: string) => void): number => {
   const raw = env.IMMICH_NSFW_THRESHOLD?.trim();
   if (!raw) {
     return DEFAULT_NSFW_THRESHOLD;
   }
   const value = Number(raw);
-  return Number.isFinite(value) && value >= 0 && value <= 1 ? value : DEFAULT_NSFW_THRESHOLD;
+  if (Number.isFinite(value) && value >= 0 && value <= 1) {
+    return value;
+  }
+  if (onInvalid && !reportedInvalid.has(raw)) {
+    reportedInvalid.add(raw);
+    onInvalid(raw);
+  }
+  return DEFAULT_NSFW_THRESHOLD;
 };
