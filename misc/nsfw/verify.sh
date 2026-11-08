@@ -11,7 +11,7 @@ cd "$ROOT"
 run pnpm --filter @immich/sdk --filter @immich/plugin-sdk build
 
 cd "$ROOT/server"
-SERVER_UNIT=(src/services/duplicate.service.spec.ts src/services/job.service.spec.ts)
+SERVER_UNIT=(src/services/duplicate.service.spec.ts src/services/job.service.spec.ts src/services/queue.service.spec.ts)
 for f in src/nsfw/nsfw.spec.ts src/services/nsfw.service.spec.ts; do
   [[ -f "$f" ]] && SERVER_UNIT+=("$f")
 done
