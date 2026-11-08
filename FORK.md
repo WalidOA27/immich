@@ -18,6 +18,9 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `server/src/nsfw/laion-clip-b32.weights.ts`, `nsfw.fixture.json` | Generated weights and test fixture |
 | `server/src/nsfw/nsfw.spec.ts` | Scorer tests |
 | `server/src/services/nsfw.service.ts`, `nsfw.service.spec.ts` | NSFW Detection queue handlers; warns at startup on invalid `IMMICH_NSFW_THRESHOLD` |
+| `web/src/lib/stores/nsfw.store.ts` | Persisted mode `nsfw-mode`: `show` / `blur` / `hide` |
+| `web/src/lib/components/shared-components/NsfwToggle.svelte` | 3-state toggle (reloads when entering/leaving hide) |
+| `web/src/lib/components/assets/thumbnail/__test__/nsfw-blur.spec.ts`, `web/src/lib/managers/timeline-manager/nsfw-hide.svelte.spec.ts` | Web tests |
 | `server/src/nsfw/nsfw.sql.ts` | `isNsfwAsset(threshold)` SQL fragment (tolerates malformed metadata) |
 
 ## Immich files modified
@@ -33,6 +36,13 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `server/src/services/job.service.spec.ts`, `queue.service.spec.ts` | Expectations for the extra chained job / extra queue |
 | `server/src/dtos/time-bucket.dto.ts` | Query param `withoutNsfw`; response column `isNsfw` |
 | `server/src/repositories/asset.repository.ts` | Import + `withoutNsfw` option + filter in `getTimeBuckets`/`getTimeBucket` + `isNsfw` column (threshold read here, so `timeline.service.ts` is untouched) |
+| `web/src/lib/components/assets/thumbnail/Thumbnail.svelte` | Import + `blur-2xl` class in blur mode |
+| `web/src/lib/components/shared-components/navigation-bar/NavigationBar.svelte` | `<NsfwToggle />` before the theme button |
+| `web/src/lib/managers/timeline-manager/types.ts`, `timeline-month.svelte.ts` | `isNsfw` on `TimelineAsset`, mapped from the bucket |
+| `web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts`, `internal/load-support.svelte.ts` | `withoutNsfw` in hide mode |
+| `web/src/lib/services/queue.service.ts`, `web/src/routes/admin/system-settings/JobSettings.svelte` | Queue entry in Job Queues / title map |
+| `web/src/test-data/factories/asset-factory.ts` | `isNsfw` in the bucket response factory |
+| `i18n/en.json`, `i18n/es.json` | 5 keys each |
 | `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)

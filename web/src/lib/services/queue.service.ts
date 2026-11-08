@@ -13,6 +13,7 @@ import {
   mdiCog,
   mdiContentDuplicate,
   mdiDatabaseOutline,
+  mdiEyeOff,
   mdiFaceRecognition,
   mdiFileCheckOutline,
   mdiFileJpgBox,
@@ -202,6 +203,11 @@ export const asQueueItem = ($t: MessageFormatter, queue: { name: QueueName }): Q
       icon: mdiTagFaces,
       title: $t('admin.machine_learning_facial_recognition'),
       subtitle: $t('admin.facial_recognition_job_description'),
+    },
+    [QueueName.NsfwDetection]: {
+      icon: mdiEyeOff,
+      title: $t('admin.nsfw_detection'),
+      subtitle: $t('admin.nsfw_detection_job_description'),
     },
     [QueueName.Ocr]: {
       icon: mdiOcr,

@@ -64,6 +64,7 @@ export const toResponseDto = (...timelineAsset: TimelineAsset[]) => {
     isFavorite: [],
     isImage: [],
     isTrashed: [],
+    isNsfw: [],
     livePhotoVideoId: [],
     fileCreatedAt: [],
     localOffsetHours: [],
@@ -84,6 +85,7 @@ export const toResponseDto = (...timelineAsset: TimelineAsset[]) => {
     bucketAssets.isFavorite.push(asset.isFavorite);
     bucketAssets.isImage.push(asset.isImage);
     bucketAssets.isTrashed.push(asset.isTrashed);
+    bucketAssets.isNsfw.push(asset.isNsfw ?? false);
     bucketAssets.livePhotoVideoId.push(asset.livePhotoVideoId!);
     bucketAssets.fileCreatedAt.push(fileCreatedAt);
     bucketAssets.ownerId.push(asset.ownerId);
