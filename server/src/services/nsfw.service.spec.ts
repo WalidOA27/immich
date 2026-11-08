@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AssetType, AssetVisibility, JobName, JobStatus } from 'src/enum.js';
 import { NsfwService } from 'src/services/nsfw.service.js';
 import { AssetFactory } from 'test/factories/asset.factory.js';
@@ -29,6 +29,24 @@ describe(NsfwService.name, () => {
   beforeEach(() => {
     ({ sut, mocks } = newTestService(NsfwService));
     mocks.systemMetadata.get.mockResolvedValue(enabledConfig);
+  });
+
+  describe('onBootstrap', () => {
+    afterEach(() => {
+      delete process.env.IMMICH_NSFW_THRESHOLD;
+    });
+
+    it('warns about an invalid IMMICH_NSFW_THRESHOLD', () => {
+      process.env.IMMICH_NSFW_THRESHOLD = 'bad-value';
+      sut.onBootstrap();
+      expect(mocks.logger.warn).toHaveBeenCalledWith(expect.stringContaining('bad-value'));
+    });
+
+    it('does not warn for a valid threshold', () => {
+      process.env.IMMICH_NSFW_THRESHOLD = '0.6';
+      sut.onBootstrap();
+      expect(mocks.logger.warn).not.toHaveBeenCalled();
+    });
   });
 
   describe('handleQueueNsfw', () => {
