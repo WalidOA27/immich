@@ -20,7 +20,8 @@ run pnpm exec vitest --config test/vitest.config.medium.mjs --run test/medium/sp
 run pnpm check
 
 cd "$ROOT/web"
-run pnpm exec vitest --run src/lib/components/assets/thumbnail
+run pnpm exec vitest --run src/lib/components/assets/thumbnail src/lib/managers/timeline-manager
 run pnpm check:typescript
+run pnpm check:svelte
 
 echo "verify: OK"

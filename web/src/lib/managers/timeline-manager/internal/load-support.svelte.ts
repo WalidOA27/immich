@@ -1,6 +1,8 @@
 import { authManager } from '#lib/managers/auth-manager.svelte.ts';
+import { nsfwMode } from '#lib/stores/nsfw.store.ts';
 import { toISOYearMonthUTC } from '#lib/utils/timeline-util.ts';
 import { getTimeBucket } from '@immich/sdk';
+import { get } from 'svelte/store';
 import { TimelineManager } from '../timeline-manager.svelte';
 import type { TimelineMonth } from '../timeline-month.svelte';
 import type { TimelineManagerOptions } from '../types';
@@ -20,6 +22,7 @@ export async function loadFromTimeBuckets(
     {
       ...authManager.params,
       ...options,
+      withoutNsfw: get(nsfwMode) === 'hide' || undefined,
       timeBucket,
     },
     { signal },

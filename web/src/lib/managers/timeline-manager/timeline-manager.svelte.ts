@@ -15,6 +15,7 @@ import {
 } from '#lib/managers/timeline-manager/internal/search-support.svelte.ts';
 import { WebsocketSupport } from '#lib/managers/timeline-manager/internal/websocket-support.svelte.ts';
 import { userPreferencesManager } from '#lib/managers/user-preferences-manager.svelte.ts';
+import { nsfwMode } from '#lib/stores/nsfw.store.ts';
 import { updateStackedAssetInTimeline } from '#lib/utils/actions.ts';
 import { CancellableTask } from '#lib/utils/cancellable-task.ts';
 import {
@@ -302,6 +303,7 @@ export class TimelineManager extends VirtualScrollManager {
     const timebuckets = await getTimeBuckets({
       ...authManager.params,
       ...this.#options,
+      withoutNsfw: get(nsfwMode) === 'hide' || undefined,
     });
 
     this.months = timebuckets.map((timeBucket) => {
