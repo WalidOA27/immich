@@ -1,5 +1,7 @@
-# Throwaway Immich to try the NSFW fork locally. Data lives in ~/immich-nsfw-test (delete it to reset).
-# Usage:  docker compose -f misc/nsfw/docker-compose.test.yml -p immich-nsfw-test up -d   → http://localhost:2284
+# Throwaway Immich to try the NSFW fork (also used by e2e.sh). Data lives in NAMED volumes, so it works with a remote
+# docker daemon; reset with `docker compose -p <project> -f misc/nsfw/docker-compose.test.yml down -v`.
+# Usage:  docker compose -p immich-nsfw-test -f misc/nsfw/docker-compose.test.yml up -d   → http://localhost:2284
+# Env: NSFW_IMAGE, ML_IMAGE_TAG, IMMICH_NSFW_THRESHOLD, NSFW_TEST_BIND (default 127.0.0.1), NSFW_TEST_PORT (default 2284)
 name: immich-nsfw-test
 
 services:
@@ -12,7 +14,7 @@ services:
           cpus: '2'
           memory: 2g
     volumes:
-      - ${HOME}/immich-nsfw-test/library:/data
+      - library:/data
       - /etc/localtime:/etc/localtime:ro
     environment:
       DB_HOSTNAME: database
@@ -23,13 +25,13 @@ services:
       IMMICH_MACHINE_LEARNING_URL: http://machine-learning:3003
       IMMICH_NSFW_THRESHOLD: ${IMMICH_NSFW_THRESHOLD:-0.5}
     ports:
-      - '127.0.0.1:2284:2283'
+      - '${NSFW_TEST_BIND:-127.0.0.1}:${NSFW_TEST_PORT:-2284}:2283'
     depends_on:
       - redis
       - database
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v3.3.6
+    image: ghcr.io/immich-app/immich-machine-learning:${ML_IMAGE_TAG:-v3.3.6}
     restart: unless-stopped
     deploy:
       resources:
@@ -50,8 +52,10 @@ services:
       POSTGRES_DB: immich
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      - ${HOME}/immich-nsfw-test/postgres:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     shm_size: 128mb
 
 volumes:
   model-cache:
+  library:
+  pgdata:
