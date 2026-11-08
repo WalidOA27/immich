@@ -45,6 +45,11 @@ describe('Thumbnail NSFW blur (fork)', () => {
     expect(renderWith(true).querySelector('.blur-2xl')).not.toBeNull();
   });
 
+  it('also blurs an NSFW asset in hide mode (defense in depth if it slips past the server filter)', () => {
+    nsfwMode.set('hide');
+    expect(renderWith(true).querySelector('.blur-2xl')).not.toBeNull();
+  });
+
   it('does not blur an NSFW asset in show mode', () => {
     nsfwMode.set('show');
     expect(renderWith(true).querySelector('.blur-2xl')).toBeNull();
