@@ -18,6 +18,7 @@
   import { createQuery } from '@tanstack/svelte-query';
   import { t } from 'svelte-i18n';
   import { page } from '$app/state';
+  import NsfwToggle from '../NsfwToggle.svelte';
   import ThemeButton from '../ThemeButton.svelte';
   import UserAvatar from '../UserAvatar.svelte';
   import AccountInfoPanel from './AccountInfoPanel.svelte';
@@ -114,6 +115,7 @@
           />
         {/if}
 
+        <NsfwToggle />
         <ThemeButton />
 
         <div
