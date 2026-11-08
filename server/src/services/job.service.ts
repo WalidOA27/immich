@@ -252,6 +252,7 @@ export class JobService extends BaseService {
         if (item.data.source === 'upload') {
           await this.jobRepository.queue({ name: JobName.AssetDetectDuplicates, data: item.data });
         }
+        await this.jobRepository.queue({ name: JobName.AssetDetectNsfw, data: { id: item.data.id, force: true } });
         break;
       }
 

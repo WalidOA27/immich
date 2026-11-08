@@ -24,6 +24,7 @@ import { MemoryService } from 'src/services/memory.service.js';
 import { MetadataService } from 'src/services/metadata.service.js';
 import { NotificationAdminService } from 'src/services/notification-admin.service.js';
 import { NotificationService } from 'src/services/notification.service.js';
+import { NsfwService } from 'src/services/nsfw.service.js';
 import { OcrService } from 'src/services/ocr.service.js';
 import { PartnerService } from 'src/services/partner.service.js';
 import { PersonService } from 'src/services/person.service.js';
@@ -67,6 +68,7 @@ export const services = [
   DatabaseService,
   DownloadService,
   DuplicateService,
+  NsfwService,
   IntegrityService,
   HlsService,
   JobService,

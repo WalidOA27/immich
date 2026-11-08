@@ -211,6 +211,7 @@ export type ConcurrentQueueName = Exclude<
   | QueueName.StorageTemplateMigration
   | QueueName.FacialRecognition
   | QueueName.DuplicateDetection
+  | QueueName.NsfwDetection
   | QueueName.BackupDatabase
 >;
 
@@ -402,6 +403,8 @@ export type JobItem =
   // Duplicate Detection
   | { name: JobName.AssetDetectDuplicatesQueueAll; data: IBaseJob }
   | { name: JobName.AssetDetectDuplicates; data: IEntityJob }
+  | { name: JobName.AssetDetectNsfwQueueAll; data: IBaseJob }
+  | { name: JobName.AssetDetectNsfw; data: IEntityJob }
 
   // Memories
   | { name: JobName.MemoryCleanup; data?: IBaseJob }

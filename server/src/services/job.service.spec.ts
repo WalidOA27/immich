@@ -87,7 +87,7 @@ describe(JobService.name, () => {
       },
       {
         item: { name: JobName.SmartSearch, data: { id: 'asset-1' } },
-        jobs: [],
+        jobs: [JobName.AssetDetectNsfw],
       },
       {
         item: { name: JobName.AssetDetectFaces, data: { id: 'asset-1' } },
@@ -130,5 +130,19 @@ describe(JobService.name, () => {
         expect(mocks.job.queueAll).not.toHaveBeenCalled();
       });
     }
+
+    it.each([undefined, 'upload' as const])(
+      'should force NSFW scoring after smart search (source %s)',
+      async (source) => {
+        mocks.job.run.mockResolvedValue(JobStatus.Success);
+
+        await sut.onJobRun(QueueName.BackgroundTask, { name: JobName.SmartSearch, data: { id: 'asset-1', source } });
+
+        expect(mocks.job.queue).toHaveBeenCalledWith({
+          name: JobName.AssetDetectNsfw,
+          data: { id: 'asset-1', force: true },
+        });
+      },
+    );
   });
 });
