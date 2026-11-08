@@ -15,7 +15,6 @@ services:
           memory: 2g
     volumes:
       - library:/data
-      - /etc/localtime:/etc/localtime:ro
     environment:
       DB_HOSTNAME: database
       DB_USERNAME: postgres
@@ -57,5 +56,8 @@ services:
 
 volumes:
   model-cache:
+    # external so e2e.sh's `down -v` keeps the models; e2e.sh creates it. Manual use: docker volume create immich-nsfw-e2e-model-cache
+    external: true
+    name: immich-nsfw-e2e-model-cache
   library:
   pgdata:
