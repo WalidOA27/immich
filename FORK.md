@@ -1,5 +1,7 @@
 # Immich NSFW fork
 
+Base: v3.3.6
+
 This branch (`nsfw`) adds NSFW detection to Immich with the smallest possible diff, so it can be rebased onto
 every upstream release. Design: `docs/superpowers/specs/2026-11-08-nsfw-design.md`. Plan:
 `docs/superpowers/plans/2026-11-08-nsfw.md`.
@@ -13,6 +15,8 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 |---|---|
 | `FORK.md` | This inventory |
 | `misc/nsfw/verify.sh` | One command that checks everything this fork touches |
+| `misc/nsfw/invariants.sh`, `misc/nsfw/test-invariants.sh` | Deterministic gate for automated maintenance (gate scripts unchanged, no migrations/ML changes, test counts not dropped; reports files outside this inventory) |
+| `misc/nsfw/e2e.sh` | End-to-end check against the throwaway instance (gate script) |
 | `misc/nsfw/build.sh` | Builds `immich-server:nsfw-<base tag>` locally |
 | `misc/nsfw/docker-compose.test.yml` | Throwaway instance on :2284 for manual/e2e tests (after start, run Smart Search → Missing: uploads made before ML is ready fail upstream-style) |
 | `misc/nsfw/extract_weights.py`, `misc/nsfw/make_fixture.py`, `misc/nsfw/README.md` | Regenerate weights/fixtures from the LAION model (numpy only) |
@@ -23,6 +27,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/lib/stores/nsfw.store.ts` | Persisted mode `nsfw-mode`: `show` / `blur` / `hide` |
 | `web/src/lib/components/shared-components/NsfwToggle.svelte` | 3-state toggle (reloads when entering/leaving hide) |
 | `web/src/lib/components/assets/thumbnail/__test__/nsfw-blur.spec.ts`, `web/src/lib/managers/timeline-manager/nsfw-hide.svelte.spec.ts` | Web tests |
+| `docs/superpowers/specs/2026-11-08-nsfw-design.md`, `docs/superpowers/plans/2026-11-08-nsfw.md`, `docs/superpowers/specs/2026-11-08-maintainer-design.md`, `docs/superpowers/plans/2026-11-08-maintainer.md` | Design specs and plans |
 | `server/src/nsfw/nsfw.sql.ts` | `isNsfwAsset(threshold)` SQL fragment (tolerates malformed metadata) |
 
 ## Immich files modified
