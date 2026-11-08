@@ -4,6 +4,7 @@
   import { authManager } from '#lib/managers/auth-manager.svelte.ts';
   import type { TimelineAsset } from '#lib/managers/timeline-manager/types.ts';
   import { mediaQueryManager } from '#lib/stores/media-query-manager.svelte.ts';
+  import { nsfwMode } from '#lib/stores/nsfw.store.ts';
   import { locale, playVideoThumbnailOnHover } from '#lib/stores/preferences.store.ts';
   import { getAssetMediaUrl, getAssetPlaybackUrl } from '#lib/utils.ts';
   import { moveFocus } from '#lib/utils/focus-util.ts';
@@ -237,7 +238,12 @@
   role="link"
 >
   <div class="group absolute inset-y-0" style:width="inherit" style:height="inherit">
-    <div class={['absolute size-full bg-transparent transition-transform select-none', { 'scale-[0.85]': selected }]}>
+    <div
+      class={[
+        'absolute size-full bg-transparent transition-transform select-none',
+        { 'scale-[0.85]': selected, 'blur-2xl': $nsfwMode === 'blur' && asset.isNsfw },
+      ]}
+    >
       <ImageThumbnail
         class={['absolute group-focus-visible:rounded-lg', imageClass]}
         brokenAssetClass={['z-1 absolute group-focus-visible:rounded-lg', brokenAssetClass]}

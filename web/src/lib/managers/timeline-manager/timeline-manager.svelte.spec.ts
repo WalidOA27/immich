@@ -33,6 +33,7 @@ const toResponseDto = (...timelineAsset: TimelineAsset[]) => {
     visibility: [],
     isFavorite: [],
     isImage: [],
+    isNsfw: [],
     isTrashed: [],
     livePhotoVideoId: [],
     fileCreatedAt: [],
@@ -53,6 +54,7 @@ const toResponseDto = (...timelineAsset: TimelineAsset[]) => {
     bucketAssets.visibility.push(asset.visibility);
     bucketAssets.isFavorite.push(asset.isFavorite);
     bucketAssets.isImage.push(asset.isImage);
+    bucketAssets.isNsfw.push(asset.isNsfw ?? false);
     bucketAssets.isTrashed.push(asset.isTrashed);
     bucketAssets.livePhotoVideoId.push(asset.livePhotoVideoId!);
     bucketAssets.fileCreatedAt.push(fileCreatedAt);

@@ -480,6 +480,7 @@ export class MockData {
       fileCreatedAt: bucket.map((asset) => asset.fileCreatedAt),
       localOffsetHours: bucket.map(() => 0),
       isFavorite: bucket.map((asset) => asset.isFavorite),
+      isNsfw: bucket.map(() => false),
       isTrashed: bucket.map((asset) => asset.isTrashed),
       isImage: bucket.map((asset) => asset.type === AssetTypeEnum.Image),
       duration: bucket.map((asset) => asset.duration),
