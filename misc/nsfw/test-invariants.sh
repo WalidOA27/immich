@@ -17,6 +17,10 @@ it('b', () => { expect(3).toBe(3); });
 it('c', () => { expect(4).toBe(4); expect(5).toBe(5); });
 S
 echo "print()" > machine-learning/x.py
+echo "export const m = 0;" > server/src/schema/migrations/0-base.ts
+mkdir -p server/test
+echo "export default {};" > server/test/vitest.config.mjs
+echo '{"name":"x","version":"1","scripts":{"test":"vitest"}}' > package.json
 echo "export const inv = 1;" > server/src/inv.ts
 git add -A && git commit -qm upstream && git tag v1.0.0
 
@@ -57,7 +61,7 @@ run_case() {
   git checkout -q -f -B "case" "$PRE" && git clean -qfd
   mutate
   local out rc
-  out="$(bash "$SCRIPT" "$PRE" v1.0.0)"; rc=$?
+  out="$(bash "$SCRIPT" "${PREARG:-$PRE}" "${TAGARG:-v1.0.0}")"; rc=$?
   if [[ $rc -eq $want_rc && "$out" == "$want_out" ]]; then echo "ok   $name"; pass=$((pass+1))
   else echo "FAIL $name (rc=$rc want $want_rc)"; echo "  got: $out"; echo "  want: $want_out"; failn=$((failn+1)); fi
 }
@@ -112,6 +116,59 @@ run_case "out of inventory file" 0 "OUT_OF_INVENTORY: server/src/foo.ts"
 # Generated files are ignored for the inventory report.
 mutate() { mkdir -p server/src/gen; echo "x" > server/src/gen/q.sql; git add -A; git commit -qm c; }
 run_case "generated file ignored" 0 ""
+
+# --- review fix round 1 ---
+# Commented-out tests must not count.
+mutate() { sed -i "s#^it('fork'#// it('fork'#" server/src/a.spec.ts; git commit -qam c; }
+run_case "commented-out it(" 1 "VIOLATION: test count dropped in server/src/a.spec.ts"$'\n'"VIOLATION: expect count dropped in server/src/a.spec.ts"
+
+mutate() { sed -i "s#^it('fork'.*#/* it('fork', () => { expect(6).toBe(6); }); */#" server/src/a.spec.ts; git commit -qam c; }
+run_case "block-commented it(" 1 "VIOLATION: test count dropped in server/src/a.spec.ts"$'\n'"VIOLATION: expect count dropped in server/src/a.spec.ts"
+
+mutate() { echo "describe.skipIf(true)('z', () => {});" >> server/src/a.spec.ts; git commit -qam c; }
+run_case "describe.skipIf added" 1 "VIOLATION: skip/only/todo in server/src/a.spec.ts"
+
+mutate() { echo "xit('z', () => {});" >> server/src/a.spec.ts; git commit -qam c; }
+run_case "xit added" 1 "VIOLATION: skip/only/todo in server/src/a.spec.ts"
+
+# Upstream itself adds an it.todo in the new tag: not the fork's doing.
+mutate() {
+  git checkout -q -b up v1.0.0
+  sed -i "3a it.todo('upstream');" server/src/a.spec.ts; git commit -qam up; git tag -f vU >/dev/null
+  git checkout -q case
+  sed -i "3a it.todo('upstream');" server/src/a.spec.ts; git commit -qam c
+}
+TAGARG=vU run_case "upstream-added it.todo" 0 ""
+git tag -d vU >/dev/null; git branch -q -D up
+
+mutate() { git mv server/src/schema/migrations/0-base.ts server/src/schema/migrations/9-moved.ts; git commit -qm c; }
+run_case "migration moved" 1 "VIOLATION: migration added"$'\n'"VIOLATION: migration modified or removed"$'\n'"OUT_OF_INVENTORY: server/src/schema/migrations/0-base.ts"$'\n'"OUT_OF_INVENTORY: server/src/schema/migrations/9-moved.ts"
+
+mutate() { echo "// edit" >> server/src/schema/migrations/0-base.ts; git commit -qam c; }
+run_case "migration modified" 1 "VIOLATION: migration modified or removed"$'\n'"OUT_OF_INVENTORY: server/src/schema/migrations/0-base.ts"
+
+mutate() { git mv machine-learning/x.py server/src/inv.py; git commit -qm c; }
+run_case "file moved out of machine-learning" 1 "VIOLATION: machine-learning changed"$'\n'"OUT_OF_INVENTORY: machine-learning/x.py"$'\n'"OUT_OF_INVENTORY: server/src/inv.py"
+
+mutate() { echo "// x" >> server/test/vitest.config.mjs; git commit -qam c; }
+run_case "vitest config edited" 1 "VIOLATION: gate script modified: server/test/vitest.config.mjs"$'\n'"OUT_OF_INVENTORY: server/test/vitest.config.mjs"
+
+mutate() { chmod +x misc/nsfw/verify.sh; git commit -qam c; }
+run_case "gate script mode changed" 1 "VIOLATION: gate script modified: misc/nsfw/verify.sh"
+
+mutate() { sed -i 's/"vitest"/"true"/' package.json; git commit -qam c; }
+run_case "package.json scripts changed" 1 "VIOLATION: package.json scripts changed: package.json"$'\n'"OUT_OF_INVENTORY: package.json"
+
+mutate() { sed -i 's/"version":"1"/"version":"2"/' package.json; git commit -qam c; }
+run_case "package.json non-script change" 0 "OUT_OF_INVENTORY: package.json"
+
+# Ignored untracked files are not changes.
+mutate() { echo ".superpowers/" >> .git/info/exclude; mkdir -p .superpowers; echo x > .superpowers/n; }
+run_case "ignored untracked file" 0 ""
+
+mutate() { :; }
+TAGARG=nope run_case "missing tag" 1 "VIOLATION: missing ref nope"
+PREARG=nope run_case "missing pre ref" 1 "VIOLATION: missing ref nope"
 
 echo "$pass passed, $failn failed"
 [[ $failn -eq 0 ]]
