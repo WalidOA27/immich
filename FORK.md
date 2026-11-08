@@ -17,11 +17,19 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `server/src/nsfw/nsfw.ts` | Scorer, threshold, constants |
 | `server/src/nsfw/laion-clip-b32.weights.ts`, `nsfw.fixture.json` | Generated weights and test fixture |
 | `server/src/nsfw/nsfw.spec.ts` | Scorer tests |
+| `server/src/services/nsfw.service.ts`, `nsfw.service.spec.ts` | NSFW Detection queue handlers |
 
 ## Immich files modified
 
 | File | What and why |
 |---|---|
+| `server/src/enum.ts` | `QueueName.NsfwDetection` (last, so queue order/indices of upstream don't shift), `JobName.AssetDetectNsfw*` |
+| `server/src/types.ts` | Job items; NSFW queue excluded from `ConcurrentQueueName` (concurrency 1, no config change) |
+| `server/src/services/queue.service.ts` | Start case for the queue; listed as non-concurrent |
+| `server/src/dtos/queue-legacy.dto.ts` | Queue in the legacy queues response |
+| `server/src/services/job.service.ts` | After `SmartSearch`, queue `AssetDetectNsfw` with `force: true` (one line) |
+| `server/src/services/index.ts` | Register `NsfwService` |
+| `server/src/services/job.service.spec.ts`, `queue.service.spec.ts` | Expectations for the extra chained job / extra queue |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)
 

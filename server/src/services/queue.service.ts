@@ -217,6 +217,10 @@ export class QueueService extends BaseService {
         return this.jobRepository.queue({ name: JobName.AssetDetectDuplicatesQueueAll, data: { force } });
       }
 
+      case QueueName.NsfwDetection: {
+        return this.jobRepository.queue({ name: JobName.AssetDetectNsfwQueueAll, data: { force } });
+      }
+
       case QueueName.MetadataExtraction: {
         return this.jobRepository.queue({ name: JobName.AssetExtractMetadataQueueAll, data: { force } });
       }
@@ -260,6 +264,7 @@ export class QueueService extends BaseService {
       QueueName.FacialRecognition,
       QueueName.StorageTemplateMigration,
       QueueName.DuplicateDetection,
+      QueueName.NsfwDetection,
       QueueName.BackupDatabase,
     ].includes(name);
   }

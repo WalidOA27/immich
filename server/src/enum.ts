@@ -869,6 +869,7 @@ export enum QueueName {
   Workflow = 'workflow',
   IntegrityCheck = 'integrityCheck',
   Editor = 'editor',
+  NsfwDetection = 'nsfwDetection',
 }
 
 export const QueueNameSchema = z.enum(QueueName).describe('Queue name').meta({ id: 'QueueName' });
@@ -892,6 +893,8 @@ export enum JobName {
   AssetDetectFaces = 'AssetDetectFaces',
   AssetDetectDuplicatesQueueAll = 'AssetDetectDuplicatesQueueAll',
   AssetDetectDuplicates = 'AssetDetectDuplicates',
+  AssetDetectNsfwQueueAll = 'AssetDetectNsfwQueueAll',
+  AssetDetectNsfw = 'AssetDetectNsfw',
   AssetEditThumbnailGeneration = 'AssetEditThumbnailGeneration',
   AssetEncodeVideoQueueAll = 'AssetEncodeVideoQueueAll',
   AssetEncodeVideo = 'AssetEncodeVideo',
