@@ -1,0 +1,57 @@
+# Throwaway Immich to try the NSFW fork locally. Data lives in ~/immich-nsfw-test (delete it to reset).
+# Usage:  docker compose -f misc/nsfw/docker-compose.test.yml -p immich-nsfw-test up -d   → http://localhost:2284
+name: immich-nsfw-test
+
+services:
+  server:
+    image: ${NSFW_IMAGE:-immich-server:nsfw-v3.3.6}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
+    volumes:
+      - ${HOME}/immich-nsfw-test/library:/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      DB_HOSTNAME: database
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE_NAME: immich
+      REDIS_HOSTNAME: redis
+      IMMICH_MACHINE_LEARNING_URL: http://machine-learning:3003
+      IMMICH_NSFW_THRESHOLD: ${IMMICH_NSFW_THRESHOLD:-0.5}
+    ports:
+      - '127.0.0.1:2284:2283'
+    depends_on:
+      - redis
+      - database
+
+  machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:v3.3.6
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2g
+    volumes:
+      - model-cache:/cache
+
+  redis:
+    image: docker.io/valkey/valkey:9@sha256:c123e3715db63d06d4ad6964884037aa0d5d4d703939b9929954112889708e1d
+
+  database:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: immich
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - ${HOME}/immich-nsfw-test/postgres:/var/lib/postgresql/data
+    shm_size: 128mb
+
+volumes:
+  model-cache:
