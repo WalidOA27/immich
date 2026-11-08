@@ -13,7 +13,10 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 |---|---|
 | `FORK.md` | This inventory |
 | `misc/nsfw/verify.sh` | One command that checks everything this fork touches |
-| `misc/nsfw/extract_weights.py`, `misc/nsfw/make_fixture.py` | Regenerate weights/fixtures from the LAION model (numpy only) |
+| `misc/nsfw/extract_weights.py`, `misc/nsfw/make_fixture.py`, `misc/nsfw/README.md` | Regenerate weights/fixtures from the LAION model (numpy only) |
+| `server/src/nsfw/nsfw.ts` | Scorer, threshold, constants |
+| `server/src/nsfw/laion-clip-b32.weights.ts`, `nsfw.fixture.json` | Generated weights and test fixture |
+| `server/src/nsfw/nsfw.spec.ts` | Scorer tests |
 
 ## Immich files modified
 
