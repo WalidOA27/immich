@@ -300,3 +300,18 @@ describe('nsfw (fork)', () => {
     expect(response.id).not.toContain(ids.high);
   });
 });
+
+describe('nsfw (fork) out-of-range scores', () => {
+  it('does not fail on a numeric score outside the real range', async () => {
+    const { sut, ctx } = setup();
+    const { user } = await ctx.newUser();
+    const auth = factory.auth({ user });
+    const { asset } = await ctx.newAsset({ ownerId: user.id, localDateTime: new Date('1970-02-10') });
+    await ctx.newExif({ assetId: asset.id, make: 'Canon' });
+    await ctx.newMetadata({ assetId: asset.id, key: 'nsfw', value: { score: 1e39, model: 'laion-clip-b32', v: 1 } });
+
+    const response = JSON.parse(await sut.getTimeBucket(auth, { timeBucket: '1970-02-01' }));
+    expect(response.isNsfw).toEqual([true]);
+    await expect(sut.getTimeBuckets(auth, { withoutNsfw: true })).resolves.toEqual([]);
+  });
+});

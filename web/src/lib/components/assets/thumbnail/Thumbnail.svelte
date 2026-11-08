@@ -240,7 +240,7 @@
     <div
       class={[
         'absolute size-full bg-transparent transition-transform select-none',
-        { 'scale-[0.85]': selected, 'blur-2xl': $nsfwMode === 'blur' && asset.isNsfw },
+        { 'scale-[0.85]': selected, 'blur-2xl': $nsfwMode !== 'show' && asset.isNsfw },
       ]}
     >
       <ImageThumbnail
