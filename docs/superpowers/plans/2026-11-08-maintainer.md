@@ -14,6 +14,8 @@
 
 - The maintainer never deploys: no SSH keys, no host Docker socket, no access to homelab (`192.168.1.92`) or `192.168.1.0/24`.
 - Never pushes to `nsfw`; only branches `nsfw-vX.Y.Z` + PR into `nsfw` (tests: PR base `nsfw-test`).
+- GitHub credential = the user's existing `gh` token (no new PAT). It lives ONLY in the `publisher` container (secret file `secrets/github_token`, from `gh auth token`, mode 600, never printed). The `agent` container (where opencode runs) never has it. `publisher` pushes only refs matching `^nsfw-v\d+\.\d+\.\d+$` or `^nsfw-test-[\w.-]+$` and opens/closes PRs only in `WalidOA27/immich`.
+- `dind` is NOT privileged: `cap_add: [ALL]`, `security_opt: [seccomp=unconfined, apparmor=unconfined, systempaths=unconfined]`, `cgroup: private`, entrypoint `sh -c 'umount /sys/fs/cgroup && mount -t cgroup2 none /sys/fs/cgroup && exec dockerd-entrypoint.sh'`, `DOCKER_TLS_CERTDIR=""`. Verified on archD 2026-11-08: inner containers run, and neither dind nor an inner `--privileged` container can read the host disk (`mknod b 259 4` → read denied).
 - Idle check (no new release) makes no LLM call.
 - "New" = latest non-prerelease, non-draft upstream tag newer than `Base:` in `FORK.md` on `nsfw`, not already in the state file.
 - Check on start, then every 6 h. Caps: 3 builder rounds, 6 h wall clock per release; on cap → draft PR marked failed + notify; failed release not retried until a newer release or state cleared.
@@ -109,7 +111,7 @@ Repo: new `~/immich-maintainer` (private `WalidOA27/immich-maintainer`, created 
   - `Repo.prepare(tag: str, old_base: str) -> PrepareResult(conflicts: list[str], ok: bool)` — idempotent.
   - `Gates.run(tag: str) -> GateResult(passed: bool, log: str, out_of_inventory: list[str])`
   - `Llm.build(ctx: BuildCtx) -> str` (summary), `Llm.verify(ctx: VerifyCtx) -> Verdict(approve: bool, reasons: str)`; both raise `LlmError` on failure/timeout.
-  - `Publisher.publish(tag: str, body: str, title: str, draft: bool) -> int` (PR number; supersedes older open maintainer PRs).
+  - `Publisher.publish(tag: str, body: str, title: str, draft: bool) -> int` (PR number; supersedes older open maintainer PRs). The branch name is `nsfw-<tag>` (or `nsfw-test-<tag>` when `--pr-base` is not `nsfw`).
   - `Imager.build_and_save(tag: str) -> Path`
 - Produces (`graph.py`): `build_graph(ports: Ports, checkpointer) -> CompiledGraph`; `run_release(tag, old_base, ports, db_path) -> RunOutcome(status: Literal["done","failed"], pr: int | None, reason: str)`; thread id = tag, so re-invoking with the same tag resumes.
 - Graph state: `tag, old_base, round (0..3), conflicts, gate_log, verdict, summaries: list[str], out_of_inventory, started_at, pr, status, reason`.
@@ -133,16 +135,16 @@ Repo: new `~/immich-maintainer` (private `WalidOA27/immich-maintainer`, created 
 ### Task 5: Real adapters
 
 **Files:**
-- Create: `maintainer/adapters/repo.py`, `gates.py`, `llm.py`, `publisher.py`, `imager.py`, `prompts/builder.md`, `prompts/verifier.md`, `tests/test_repo_adapter.py`, `tests/test_llm_adapter.py`, `tests/test_publisher.py`
+- Create: `maintainer/adapters/repo.py`, `gates.py`, `llm.py`, `publisher.py`, `imager.py`, `maintainer/publisher_app.py`, `prompts/builder.md`, `prompts/verifier.md`, `tests/test_repo_adapter.py`, `tests/test_llm_adapter.py`, `tests/test_publisher.py`
 
 **Interfaces:**
 - Consumes: Task 4 ports; Task 1/2 scripts in the clone.
-- Produces: `GitRepo(clone: Path)`, `ShellGates(clone)`, `OpencodeLlm(clone, model="opencode-go/deepseek-v4.1-flash", timeout_s=2700)`, `GitHubPublisher(token, repo="WalidOA27/immich", base="nsfw")` (base overridable for tests), `LocalPublisher(bare_remote: Path)`, `DindImager(clone, out_dir, keep=2)`.
+- Produces: `GitRepo(clone: Path)`, `ShellGates(clone)`, `OpencodeLlm(clone, model="opencode-go/deepseek-v4.1-flash", timeout_s=2700)`, `RemotePublisher(url="http://publisher:8080", handoff: Path)` (agent side: `git push` the branch to the shared bare repo `handoff` volume, then `POST /publish {branch, base, title, body, draft}` → `{pr}`), `publisher_app` (`maintainer/publisher_app.py`, runs in the `publisher` container: validates branch against the ref allowlist and `base ∈ {nsfw, nsfw-test}`, pushes that single ref from the bare repo to `https://github.com/WalidOA27/immich` with the token via `GIT_ASKPASS`, opens the PR via REST, closes superseded open PRs from `nsfw-v*` branches with a comment linking the new one; never pushes any other ref; rejects with 400 otherwise), `LocalPublisher(bare_remote: Path)`, `DindImager(clone, out_dir, keep=2)`.
 
 - [ ] **Step 1: Tests** —
   - `GitRepo` on a temp repo pair (upstream with tags `vA`,`vB`; fork branch `nsfw` on `vA`): clean rebase → `ok`, branch `nsfw-vB` exists; conflict in a generated-file path (`open-api/immich-openapi-specs.json`) → resolved to upstream automatically, not in `conflicts`; conflict in code → listed in `conflicts`, tree left with markers for the builder; calling `prepare` again after a simulated crash (`.git/rebase-merge` present, dirty tree) → aborts, resets, same result. `rerere.enabled=true` set on the clone.
   - `OpencodeLlm` with a fake `opencode` script on PATH: exit 1 → `LlmError`; non-JSON → `LlmError`; sleep beyond `timeout_s=1` → `LlmError`; verifier output containing `VERDICT: APPROVE` / `VERDICT: REJECT\n<reasons>` parsed. Command line asserted: `opencode run --model opencode-go/deepseek-v4.1-flash --format json --auto --title "<role> <tag> r<n>"`; verifier uses `--agent plan` (read-only).
-  - `GitHubPublisher` with `httpx.MockTransport`: pushes then `POST /pulls` with `base`, `draft`; with an open PR from branch `nsfw-vOLD` titled by the maintainer → `PATCH state=closed` + comment linking the new PR.
+  - `publisher_app` with `httpx.MockTransport` + temp bare repo: valid request pushes only that ref then `POST /pulls` with `base`, `draft`; with an open PR from branch `nsfw-vOLD` → `PATCH state=closed` + comment linking the new PR; branch `nsfw`, `main`, `nsfw-v3.3.7;rm` or base `main` → 400 and no push; token never appears in responses or logs.
 - [ ] **Step 2: Run** → FAIL.
 - [ ] **Step 3: Implement.** Notes:
   - `GitRepo.prepare`: `git fetch upstream --tags`, `git checkout -B nsfw-<tag> origin/nsfw`, `git rebase --onto <tag> <old_base>`; regenerate generated files after a successful rebase using `FORK.md`'s commands (run with `MISE_LOCKED=1`, Postgres for `mise run sql` from dind via testcontainers-free `docker run` of the Immich Postgres image); update `Base:` line in `FORK.md`; commit.
@@ -166,16 +168,17 @@ Repo: new `~/immich-maintainer` (private `WalidOA27/immich-maintainer`, created 
 - [ ] **Step 2: Run** → FAIL; **Step 3: Implement**; **Step 4: Run** → PASS.
 - [ ] **Step 5: Container.** `Dockerfile` (`python:3.12-slim` + git, docker CLI, `libnotify-bin`, ImageMagick, mise, opencode 2.2.5, `uv pip install .`), non-root user uid 1000. `docker-compose.yml`:
   - network `maint` with fixed subnet `172.31.250.0/24`;
-  - `agent`: `restart: unless-stopped`, `cpus: 4`, `mem_limit: 8g`, volumes `work:/work` (clone + state + `checkpoints.sqlite`), `./out:/out`, `/run/user/1000/bus:/run/user/1000/bus` (no other host paths: never mount `/` or `$HOME`, which hold SSH keys), secrets `opencode_auth` (a generated `auth.json` containing only the `opencode-go` entry) and `github_pat`; env `DOCKER_HOST=tcp://dind:2375`, `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus`;
-  - `dind`: `docker:29-dind`, `privileged: true`, `restart: unless-stopped`, `cpus: 4`, `mem_limit: 8g`, `DOCKER_TLS_CERTDIR=""`, volume `dind:/var/lib/docker`, not exposed on the host.
+  - `agent`: (also verify inside agent: no file contains the GitHub token — `grep -r` for its prefix over `/` excluding `/proc`) `restart: unless-stopped`, `cpus: 4`, `mem_limit: 8g`, volumes `work:/work` (clone + state + `checkpoints.sqlite`), `./out:/out`, `/run/user/1000/bus:/run/user/1000/bus` (no other host paths: never mount `/` or `$HOME`, which hold SSH keys), secret `opencode_auth` (a generated `auth.json` containing only the `opencode-go` entry), volume `handoff:/handoff`; NO GitHub token; env `DOCKER_HOST=tcp://dind:2375`, `DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus`;
+  - `dind`: `docker:29-dind`, unprivileged config from Global Constraints, `restart: unless-stopped`, `cpus: 4`, `mem_limit: 8g`, volume `dind:/var/lib/docker`, not exposed on the host.
+  - `publisher`: same image, command `python -m maintainer.publisher_app`, `restart: unless-stopped`, `cpus: 0.5`, `mem_limit: 256m`, secret `github_token`, volume `handoff:/handoff:ro`, port 8080 only on the `maint` network.
   - `host/fw.sh` installs `DOCKER-USER` rules: drop from `172.31.250.0/24` (and dind's inner bridge, masqueraded through it) to `192.168.1.0/24`; `immich-maintainer-fw.service` (`After=docker.service`, `PartOf=docker.service`, oneshot, `RemainAfterExit`).
 - [ ] **Step 6: Verify** `docker compose build && docker compose up -d`; inside agent: `curl -m5 http://192.168.1.92` fails; `curl -m5 https://api.github.com` works; `ls /var/run/docker.sock` absent; `ls ~/.ssh` absent; `notify-send test` shows on KDE.
 - [ ] **Step 7: Commit + push** `feat: supervisor and container stack`.
 
 ### Task 7: One-time setup and acceptance
 
-- [ ] **Step 1 (user):** create fine-grained PAT — repo `WalidOA27/immich` only, Contents RW + Pull requests RW — into `~/immich-maintainer/secrets/github_pat`.
-- [ ] **Step 2:** `gh api` ruleset on `WalidOA27/immich` protecting `nsfw` (no direct push, admin bypass for the user); create branch `nsfw-test`.
+- [ ] **Step 1:** `umask 077; gh auth token > ~/immich-maintainer/secrets/github_token` (never echo it).
+- [ ] **Step 2:** create branch `nsfw-test` on `WalidOA27/immich` (from `nsfw`). No ruleset (an admin token bypasses it; the publisher allowlist is the guard).
 - [ ] **Step 3:** `sudo install` + `systemctl enable --now immich-maintainer-fw`; reboot-free check: `iptables -S DOCKER-USER` shows the rules.
 - [ ] **Step 4: Replay.** Build `replay` setup: branch `nsfw-replay-base` = `nsfw` rebased onto `v3.3.5` (done by hand, `Base: v3.3.5`), run `python -m maintainer.main --once --tag v3.3.6 --fork-branch nsfw-replay-base --pr-base nsfw-test` → PR into `nsfw-test` green, tar in `out/`, two notifications.
 - [ ] **Step 5: Broken case.** Same, with a commit on `nsfw-replay-base` that renames the `withoutNsfw` option use in `asset.repository.ts` so it no longer compiles → builder fixes it within 3 rounds, or draft PR + "necesita ayuda".
