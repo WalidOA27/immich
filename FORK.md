@@ -18,7 +18,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `misc/nsfw/invariants.sh`, `misc/nsfw/test-invariants.sh` | Deterministic gate for automated maintenance (gate scripts unchanged, no migrations/ML changes, test counts not dropped; reports files outside this inventory) |
 | `misc/nsfw/e2e.sh` | End-to-end check against the throwaway instance (gate script) |
 | `misc/nsfw/build.sh` | Builds `immich-server:nsfw-<base tag>` locally |
-| `misc/nsfw/docker-compose.test.yml` | Throwaway instance on :2284 for manual/e2e tests (after start, run Smart Search → Missing: uploads made before ML is ready fail upstream-style) |
+| `misc/nsfw/docker-compose.test.yml` | Throwaway instance (named volumes, port `NSFW_TEST_PORT` default 2284, bind `NSFW_TEST_BIND`) for manual tests and `e2e.sh` (after start, run Smart Search → Missing: uploads made before ML is ready fail upstream-style) |
 | `misc/nsfw/extract_weights.py`, `misc/nsfw/make_fixture.py`, `misc/nsfw/README.md` | Regenerate weights/fixtures from the LAION model (numpy only) |
 | `server/src/nsfw/nsfw.ts` | Scorer, threshold, constants |
 | `server/src/nsfw/laion-clip-b32.weights.ts`, `nsfw.fixture.json` | Generated weights and test fixture |
