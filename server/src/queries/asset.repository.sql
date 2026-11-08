@@ -396,8 +396,10 @@ with
         where
           nsfw_meta."assetId" = asset.id
           and nsfw_meta.key = $2
-          and jsonb_typeof(nsfw_meta.value -> 'score') = 'number'
-          and (nsfw_meta.value ->> 'score')::real >= $3
+          and case
+            when jsonb_typeof(nsfw_meta.value -> 'score') = 'number' then (nsfw_meta.value -> 'score')::numeric >= $3
+            else false
+          end
       ) as "isNsfw",
       "asset"."livePhotoVideoId",
       extract(
