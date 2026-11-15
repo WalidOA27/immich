@@ -1,62 +1,38 @@
-import { render } from '@testing-library/svelte';
-import { getIntersectionObserverMock } from '$lib/__mocks__/intersection-observer.mock';
-import Thumbnail from '$lib/components/assets/thumbnail/Thumbnail.svelte';
-import { nsfwMode } from '$lib/stores/nsfw.store';
-import { assetFactory } from '@test-data/factories/asset-factory';
+import Thumbnail from '#lib/components/assets/thumbnail/Thumbnail.svelte';
+import { nsfwMode } from '#lib/stores/nsfw.store.ts';
+import { factory } from '#test/unit/factories.ts';
+import { expect } from 'vitest';
+import { render } from 'vitest-browser-svelte';
 
-vi.mock('$lib/utils/navigation', () => ({
-  currentUrlReplaceAssetId: vi.fn(),
-  isSharedLinkRoute: vi.fn().mockReturnValue(false),
-}));
-
-vi.hoisted(() => {
-  Object.defineProperty(globalThis, 'matchMedia', {
-    writable: true,
-    enumerable: true,
-    value: vi.fn().mockImplementation((query) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
-});
-
-const renderWith = (isNsfw: boolean) => {
-  const asset = { ...assetFactory.build({ originalPath: 'image.jpg', originalMimeType: 'image/jpeg' }), isNsfw };
-  return render(Thumbnail, { asset }).baseElement;
+// Fork addition (see FORK.md): NSFW thumbnails are blurred unless the user chose "show".
+const renderThumbnail = async (isNsfw: boolean) => {
+  const asset = factory.timelineAsset({ isNsfw });
+  const { container } = await render(Thumbnail, { asset });
+  return container;
 };
 
 describe('Thumbnail NSFW blur (fork)', () => {
-  beforeAll(() => {
-    vi.stubGlobal('IntersectionObserver', getIntersectionObserverMock());
-  });
-
   afterEach(() => {
     nsfwMode.set('show');
   });
 
-  it('blurs an NSFW asset in blur mode', () => {
+  it('blurs an NSFW asset in blur mode', async () => {
     nsfwMode.set('blur');
-    expect(renderWith(true).querySelector('.blur-2xl')).not.toBeNull();
+    expect((await renderThumbnail(true)).querySelector('.blur-2xl')).not.toBeNull();
   });
 
-  it('also blurs an NSFW asset in hide mode (defense in depth if it slips past the server filter)', () => {
-    nsfwMode.set('hide');
-    expect(renderWith(true).querySelector('.blur-2xl')).not.toBeNull();
-  });
-
-  it('does not blur an NSFW asset in show mode', () => {
+  it('does not blur an NSFW asset in show mode', async () => {
     nsfwMode.set('show');
-    expect(renderWith(true).querySelector('.blur-2xl')).toBeNull();
+    expect((await renderThumbnail(true)).querySelector('.blur-2xl')).toBeNull();
   });
 
-  it('does not blur a safe asset in blur mode', () => {
+  it('does not blur a safe asset in blur mode', async () => {
     nsfwMode.set('blur');
-    expect(renderWith(false).querySelector('.blur-2xl')).toBeNull();
+    expect((await renderThumbnail(false)).querySelector('.blur-2xl')).toBeNull();
+  });
+
+  it('blurs an NSFW asset in hide mode too', async () => {
+    nsfwMode.set('hide');
+    expect((await renderThumbnail(true)).querySelector('.blur-2xl')).not.toBeNull();
   });
 });
