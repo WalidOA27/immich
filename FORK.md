@@ -75,4 +75,6 @@ Then update the base tag mentioned at the top of the spec/plan and in this file.
 ## Baseline notes
 
 - `pnpm test -- <file>` runs the whole suite; use `pnpm exec vitest --config test/vitest.config.mjs --run <files>`.
-- `@immich/sdk` and `@immich/plugin-sdk` must be built before server tests (`verify.sh` does it).
+- `@immich/sdk` and `@immich/plugin-sdk` must be built before server tests (`verify.sh` does it) and before
+  the server runs (`mise run sync-open-api` / `mise run sql` build them first); `server/src/plugin-sdk.d.ts`
+  only supplies the plugin SDK types to `nest build` while its `dist/` is missing.

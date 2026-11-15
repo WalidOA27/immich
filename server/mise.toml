@@ -32,10 +32,18 @@ run = { task = "lint --fix" }
 env._.path = "./node_modules/.bin"
 run = "tsc --noEmit"
 
+[tasks."plugin-sdk-build"]
+run = [
+  "pnpm --filter @immich/sdk build",
+  "pnpm --filter @immich/plugin-sdk build",
+]
+
 [tasks.sql]
+depends = ["plugin-sdk-build"]
 run = "node ./dist/bin/sync-sql.js"
 
 [tasks."sync-open-api"]
+depends = ["plugin-sdk-build"]
 run = "node ./dist/bin/sync-open-api.js"
 
 [tasks.migrations]
