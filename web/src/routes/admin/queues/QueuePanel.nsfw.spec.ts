@@ -1,35 +1,15 @@
 // Fork addition (see FORK.md): the NSFW Detection card must be in Admin > Queues like every other
 // asset job, with All / Missing buttons that send the same commands as the rest.
+import { queryClient } from '#lib/queries/client.ts';
+import { getUserConfigQuery } from '#lib/queries/config-user.query.ts';
+import { test } from '#test/unit/fixtures.ts';
+import { renderWithTooltips } from '#test/unit/helpers.ts';
 import { QueueCommand, QueueName, type QueueResponseDto } from '@immich/sdk';
-import { within } from '@testing-library/svelte';
-import userEvent from '@testing-library/user-event';
-import { renderWithTooltips as render } from '$tests/helpers';
 import QueuePanel from './QueuePanel.svelte';
 
-const flags = vi.hoisted(() => ({ value: { smartSearch: true, duplicateDetection: true } as Record<string, boolean> }));
-
-vi.mock(import('$lib/managers/feature-flags-manager.svelte'), function () {
-  return {
-    featureFlagsManager: {
-      init: vi.fn(),
-      loadFeatureFlags: vi.fn(),
-      get value() {
-        return flags.value;
-      },
-    } as never,
-  };
-});
-
-vi.mock(import('$lib/managers/queue-manager.svelte'), function () {
-  return { queueManager: { refresh: vi.fn(), listen: vi.fn(), queues: [] } as never };
-});
-
-vi.mock(import('@immich/sdk'), async (importOriginal) => {
-  const actual = await importOriginal();
-  return { ...actual, runQueueCommandLegacy: vi.fn().mockResolvedValue({}) };
-});
-
-const { runQueueCommandLegacy } = await import('@immich/sdk');
+vi.mock('#lib/managers/queue-manager.svelte.ts', () => ({
+  queueManager: { refresh: vi.fn(), listen: vi.fn(), queues: [] },
+}));
 
 const idle = (name: QueueName): QueueResponseDto =>
   ({
@@ -44,14 +24,15 @@ const nsfwCard = (root: HTMLElement) => {
   return link!.closest('.rounded-2xl') as HTMLElement;
 };
 
-describe('QueuePanel NSFW Detection card (fork)', () => {
-  beforeEach(() => {
-    flags.value = { smartSearch: true, duplicateDetection: true };
-    vi.mocked(runQueueCommandLegacy).mockClear();
+test.describe('QueuePanel NSFW Detection card (fork)', () => {
+  test.beforeEach(async ({ api, data }) => {
+    data.userConfig.machineLearning.enabled = true;
+    api.on({ runQueueCommandLegacy: () => ({ status: 204 }), getQueues: () => ({ json: [] }) });
+    await queryClient.query(getUserConfigQuery());
   });
 
-  it('is listed right after Duplicate Detection', () => {
-    const { container } = render(QueuePanel, {
+  test('is listed right after Duplicate Detection', async () => {
+    const { baseElement } = await renderWithTooltips(QueuePanel, {
       queues: [
         idle(QueueName.SmartSearch),
         idle(QueueName.DuplicateDetection),
@@ -59,7 +40,7 @@ describe('QueuePanel NSFW Detection card (fork)', () => {
         idle(QueueName.FaceDetection),
       ],
     });
-    const order = [...container.querySelectorAll('a[href^="/admin/queues/"]')]
+    const order = [...baseElement.querySelectorAll('a[href^="/admin/queues/"]')]
       .map((a) => a.getAttribute('href'))
       .filter((href, i, all) => all.indexOf(href) === i);
     expect(order).toEqual([
@@ -70,29 +51,34 @@ describe('QueuePanel NSFW Detection card (fork)', () => {
     ]);
   });
 
-  it('"Missing" queues only unscored assets', async () => {
-    const { container } = render(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
-    await userEvent.click(within(nsfwCard(container)).getByText('missing'));
-    expect(runQueueCommandLegacy).toHaveBeenCalledWith({
-      name: QueueName.NsfwDetection,
-      queueCommandDto: { command: QueueCommand.Start, force: false },
+  test('"Missing" queues only unscored assets', async ({ api }) => {
+    const { baseElement } = await renderWithTooltips(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
+    const buttons = [...nsfwCard(baseElement).querySelectorAll('button')];
+    const missing = buttons.find((button) => button.textContent?.includes('missing'))!;
+    await missing.click();
+    expect(api.runQueueCommandLegacy).toHaveBeenCalledWith({
+      params: { name: QueueName.NsfwDetection },
+      body: { command: QueueCommand.Start, force: false },
     });
   });
 
-  it('"All" re-scores every asset', async () => {
-    const { container } = render(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
-    await userEvent.click(within(nsfwCard(container)).getByText('all'));
-    expect(runQueueCommandLegacy).toHaveBeenCalledWith({
-      name: QueueName.NsfwDetection,
-      queueCommandDto: { command: QueueCommand.Start, force: true },
+  test('"All" re-scores every asset', async ({ api }) => {
+    const { baseElement } = await renderWithTooltips(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
+    const buttons = [...nsfwCard(baseElement).querySelectorAll('button')];
+    const all = buttons.find((button) => button.textContent?.includes('all'))!;
+    await all.click();
+    expect(api.runQueueCommandLegacy).toHaveBeenCalledWith({
+      params: { name: QueueName.NsfwDetection },
+      body: { command: QueueCommand.Start, force: true },
     });
   });
 
-  it('is disabled when Smart Search is off (it scores Smart Search embeddings)', () => {
-    flags.value = { smartSearch: false, duplicateDetection: true };
-    const { container } = render(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
-    const card = within(nsfwCard(container));
-    expect(card.getByText('disabled')).toBeInTheDocument();
-    expect(card.queryByText('missing')).toBeNull();
+  test('is disabled when Smart Search is off (it scores Smart Search embeddings)', async ({ data }) => {
+    data.userConfig.machineLearning.enabled = false;
+    queryClient.setQueryData(getUserConfigQuery().queryKey, data.userConfig);
+    const { baseElement } = await renderWithTooltips(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
+    const card = nsfwCard(baseElement);
+    expect(card.textContent).toContain('disabled');
+    expect(card.textContent).not.toContain('missing');
   });
 });

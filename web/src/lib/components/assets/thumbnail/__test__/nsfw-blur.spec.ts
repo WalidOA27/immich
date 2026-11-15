@@ -3,13 +3,8 @@ import { nsfwMode } from '#lib/stores/nsfw.store.ts';
 import { factory } from '#test/unit/factories.ts';
 import { render } from 'vitest-browser-svelte';
 
-vi.mock('#lib/utils/navigation.ts', () => ({
-  currentUrlReplaceAssetId: vi.fn(),
-  isSharedLinkRoute: vi.fn().mockReturnValue(false),
-}));
-
 const renderWith = (isNsfw: boolean) => {
-  const asset = factory.timelineAsset({ isNsfw, originalPath: 'image.jpg', originalMimeType: 'image/jpeg' });
+  const asset = factory.timelineAsset({ isNsfw });
   return render(Thumbnail, { asset });
 };
 

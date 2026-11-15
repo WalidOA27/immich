@@ -1,5 +1,5 @@
 import { nsfwMode } from '#lib/stores/nsfw.store.ts';
-import { fromTimelinePlainDateTime } from '#lib/utils/timeline-util.ts';
+import { fromISODateTimeUTCToObject, fromTimelinePlainDateTime } from '#lib/utils/timeline-util.ts';
 import { factory } from '#test/unit/factories.ts';
 import { test } from '#test/unit/fixtures.ts';
 import type { TimeBucketAssetResponseDto } from '@immich/sdk';
@@ -39,6 +39,7 @@ const toResponseDto = (...timelineAsset: TimelineAsset[]) => {
     bucketAssets.isImage.push(asset.isImage);
     bucketAssets.isTrashed.push(asset.isTrashed);
     bucketAssets.isNsfw.push(asset.isNsfw ?? false);
+    bucketAssets.localOffsetHours.push(0);
     bucketAssets.livePhotoVideoId.push(asset.livePhotoVideoId!);
     bucketAssets.fileCreatedAt.push(fromTimelinePlainDateTime(asset.fileCreatedAt).toISO()!);
     bucketAssets.ownerId.push(asset.ownerId);
@@ -62,7 +63,13 @@ test.describe('TimelineManager NSFW hide mode', () => {
   test.beforeEach(({ api }) => {
     api.on({
       getTimeBuckets: () => ({ json: [{ count: 1, timeBucket: '2024-01-01' }] }),
-      getTimeBucket: () => ({ json: toResponseDto(...factory.many(1, () => factory.timelineAsset())) }),
+      getTimeBucket: () => ({
+        json: toResponseDto(
+          ...factory.many(1, () =>
+            factory.timelineAsset({ fileCreatedAt: fromISODateTimeUTCToObject('2024-01-15T00:00:00.000Z') }),
+          ),
+        ),
+      }),
     });
   });
 
@@ -79,12 +86,14 @@ test.describe('TimelineManager NSFW hide mode', () => {
     expect(api.getTimeBucket.calls[0].params).toMatchObject({ withoutNsfw: true });
   });
 
-  test.each(['show', 'blur'] as const)('does not filter in %s mode', async (mode, { api }) => {
-    nsfwMode.set(mode);
-    await load();
-    expect(api.getTimeBuckets.calls).toHaveLength(1);
-    expect(api.getTimeBuckets.calls[0].params?.withoutNsfw).toBeUndefined();
-    expect(api.getTimeBucket.calls).toHaveLength(1);
-    expect(api.getTimeBucket.calls[0].params?.withoutNsfw).toBeUndefined();
-  });
+  for (const mode of ['show', 'blur'] as const) {
+    test(`does not filter in ${mode} mode`, async ({ api }) => {
+      nsfwMode.set(mode);
+      await load();
+      expect(api.getTimeBuckets.calls).toHaveLength(1);
+      expect(api.getTimeBuckets.calls[0].params?.withoutNsfw).toBeUndefined();
+      expect(api.getTimeBucket.calls).toHaveLength(1);
+      expect(api.getTimeBucket.calls[0].params?.withoutNsfw).toBeUndefined();
+    });
+  }
 });

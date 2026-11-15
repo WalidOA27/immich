@@ -34,6 +34,7 @@ const toResponseDto = (...timelineAsset: TimelineAsset[]) => {
     isFavorite: [],
     isImage: [],
     isTrashed: [],
+    isNsfw: [],
     livePhotoVideoId: [],
     fileCreatedAt: [],
     localOffsetHours: [],

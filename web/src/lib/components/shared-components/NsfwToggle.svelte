@@ -1,6 +1,6 @@
 <script lang="ts">
   // Fork addition (see FORK.md): Show / Blur / Hide NSFW assets in the timeline.
-  import { nsfwMode, type NsfwMode } from '$lib/stores/nsfw.store';
+  import { nsfwMode, type NsfwMode } from '#lib/stores/nsfw.store.ts';
   import { IconButton } from '@immich/ui';
   import { mdiBlur, mdiEye, mdiEyeOff } from '@mdi/js';
   import { t } from 'svelte-i18n';
@@ -31,7 +31,6 @@
       {icon}
       title={label}
       aria-label={label}
-      aria-pressed={$nsfwMode === mode}
       onclick={() => select(mode)}
     />
   {/each}
