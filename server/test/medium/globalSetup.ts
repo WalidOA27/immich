@@ -35,8 +35,9 @@ const globalSetup = async () => {
     .withWaitStrategy(Wait.forAll([Wait.forLogMessage('database system is ready to accept connections', 2)]))
     .start();
 
+  const postgresHost = postgresContainer.getHost();
   const postgresPort = postgresContainer.getMappedPort(5432);
-  const postgresUrl = `postgres://postgres:postgres@localhost:${postgresPort}/${templateName}`;
+  const postgresUrl = `postgres://postgres:postgres@${postgresHost}:${postgresPort}/${templateName}`;
 
   process.env.IMMICH_TEST_POSTGRES_URL = postgresUrl;
 
