@@ -1,2 +1,9 @@
-/dist
+/dist/*
+# Vendored build bootstrap: a cold `cd server && pnpm build` (as the maintenance gates run it)
+# needs the package's JS and declarations before `mise run plugins` has built them.
+!/dist/index.js
+!/dist/index.d.ts
+!/dist/host-functions.d.ts
+!/dist/sdk.d.ts
+!/dist/types.d.ts
 /node_modules

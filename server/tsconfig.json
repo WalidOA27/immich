@@ -20,7 +20,8 @@
     "preserveWatchOutput": true,
     "paths": {
       "src/*": ["./src/*"],
-      "test/*": ["./test/*"]
+      "test/*": ["./test/*"],
+      "@immich/sdk": ["../packages/sdk/src/index.ts"]
     },
     "rootDir": ".",
     "jsx": "react",

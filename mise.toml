@@ -74,6 +74,9 @@ run = [
   "oazapfts --optimistic --argumentStyle=object --useEnumType --allSchemas open-api/immich-openapi-specs.json packages/sdk/src/fetch-client.ts",
   { task = "//:sdk:install" },
   { task = "//:sdk:build" },
+  # `//:sdk:install` is filtered and prunes the rest of the workspace's node_modules;
+  # restore them so later steps (`mise run sql`, tests) still have their dependencies.
+  "pnpm install --frozen-lockfile",
 ]
 
 [tasks.open-api-dart]

@@ -29,6 +29,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/lib/components/assets/thumbnail/__test__/nsfw-blur.spec.ts`, `web/src/lib/managers/timeline-manager/nsfw-hide.svelte.spec.ts`, `web/src/routes/admin/queues/QueuePanel.nsfw.spec.ts` | Web tests (the last one: NSFW Detection card in Admin > Queues with All / Missing) |
 | `docs/superpowers/specs/2026-11-08-nsfw-design.md`, `docs/superpowers/plans/2026-11-08-nsfw.md`, `docs/superpowers/specs/2026-11-08-maintainer-design.md`, `docs/superpowers/plans/2026-11-08-maintainer.md` | Design specs and plans |
 | `server/src/nsfw/nsfw.sql.ts` | `isNsfwAsset(threshold)` SQL fragment (tolerates malformed metadata) |
+| `packages/plugin-sdk/dist/index.js`, `packages/plugin-sdk/dist/index.d.ts`, `packages/plugin-sdk/dist/host-functions.d.ts`, `packages/plugin-sdk/dist/sdk.d.ts`, `packages/plugin-sdk/dist/types.d.ts` | Vendored build of upstream `@immich/plugin-sdk` (JS + declarations only) so a cold `cd server && pnpm build` works before `mise run plugins` has run; `mise run plugins` / the gates rebuild it |
 
 ## Immich files modified
 
@@ -51,6 +52,9 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/routes/admin/queues/QueuePanel.svelte` | NSFW Detection card (All / Missing) in the Queues page, next to Duplicate Detection |
 | `i18n/en.json`, `i18n/es.json` | 5 keys each |
 | `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
+| `server/tsconfig.json` | `@immich/sdk` path mapping to the tracked SDK source, so `pnpm build`/`pnpm check` do not need the unbuilt `packages/sdk/build` |
+| `mise.toml` | `open-api-typescript` reinstalls the workspace after `//:sdk:install`: the filtered SDK install prunes everyone else's `node_modules`, and the next generated-file step (`mise run sql`) and the tests still need them |
+| `packages/plugin-sdk/.gitignore` | Keep `dist/` ignored except the vendored `index.js` and declarations above |
 | `web/src/lib/managers/timeline-manager/timeline-manager.svelte.spec.ts`, `web/test/common/data.ts`, `web/test/common/payloads.ts` | `isNsfw` / `nsfwDetection` in upstream bucket and queue test fixtures |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)
