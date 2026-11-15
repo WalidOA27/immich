@@ -59,6 +59,13 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 - `packages/sdk/src/fetch-client.ts` — `mise run open-api-typescript` (repo root)
 - `server/src/queries/*.sql` — `cd server && mise run sql` (needs the dev Postgres)
 
+## Build outputs committed on purpose
+
+`cd server && pnpm build` imports `@immich/plugin-sdk` and `@immich/sdk`, but a fresh checkout only has their sources.
+So `packages/plugin-sdk/dist/` (the `index.js` runtime bundle and its `.d.ts`) and `packages/sdk/build/*.d.ts` are
+committed too. `verify.sh` builds both packages from source, so refresh these files only when those packages change
+upstream.
+
 ## How to rebase onto a new release
 
 ```bash
