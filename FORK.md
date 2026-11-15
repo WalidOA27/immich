@@ -51,7 +51,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/routes/admin/queues/QueuePanel.svelte` | NSFW Detection card (All / Missing) in the Queues page, next to Duplicate Detection |
 | `i18n/en.json`, `i18n/es.json` | 5 keys each |
 | `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
-| `web/src/lib/managers/timeline-manager/timeline-manager.svelte.spec.ts`, `web/test/common/data.ts` | `isNsfw` in upstream bucket test helpers |
+| `web/src/lib/managers/timeline-manager/timeline-manager.svelte.spec.ts`, `web/test/common/data.ts`, `web/test/common/payloads.ts` | `isNsfw` / `nsfwDetection` in upstream bucket and queue test fixtures |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)
 
@@ -74,5 +74,7 @@ Then update the base tag mentioned at the top of the spec/plan and in this file.
 
 ## Baseline notes
 
+- Upstream v3.4.1 removed `web/src/test-data/` and moved web unit tests to the `#test`/`#lib` infrastructure; the
+  fork's web tests use that infrastructure (there is no `$lib` alias anymore).
 - `pnpm test -- <file>` runs the whole suite; use `pnpm exec vitest --config test/vitest.config.mjs --run <files>`.
 - `@immich/sdk` and `@immich/plugin-sdk` must be built before server tests (`verify.sh` does it).

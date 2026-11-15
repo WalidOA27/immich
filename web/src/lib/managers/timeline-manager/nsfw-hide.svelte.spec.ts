@@ -1,14 +1,19 @@
 import { nsfwMode } from '#lib/stores/nsfw.store.ts';
-import { fromTimelinePlainDateTime } from '#lib/utils/timeline-util.ts';
+import { fromISODateTimeUTCToObject, fromTimelinePlainDateTime } from '#lib/utils/timeline-util.ts';
 import { factory } from '#test/unit/factories.ts';
 import { test } from '#test/unit/fixtures.ts';
 import type { Mock } from '#test/unit/mocks/mock.ts';
 import type { TimeBucketAssetResponseDto } from '@immich/sdk';
 import { tick } from 'svelte';
-import type { TimelineAsset } from '../types';
 import { TimelineManager } from './timeline-manager.svelte';
+import type { TimelineAsset } from './types';
 
 // Fork addition (see FORK.md)
+
+const monthAsset = (): TimelineAsset => {
+  const fileCreatedAt = fromISODateTimeUTCToObject('2024-01-15T00:00:00.000Z');
+  return { ...factory.timelineAsset(), fileCreatedAt, localDateTime: fileCreatedAt };
+};
 
 const toResponseDto = (assets: TimelineAsset[]): TimeBucketAssetResponseDto => ({
   id: assets.map((asset) => asset.id),
@@ -45,7 +50,7 @@ describe('TimelineManager NSFW hide mode', () => {
   beforeEach<{ api: Mock['api'] }>(({ api }) => {
     api.on({
       getTimeBuckets: () => ({ json: [{ count: 1, timeBucket: '2024-01-01T00:00:00.000Z' }] }),
-      getTimeBucket: () => ({ json: toResponseDto(factory.many(1, () => factory.timelineAsset())) }),
+      getTimeBucket: () => ({ json: toResponseDto([monthAsset()]) }),
     });
   });
 
