@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { featureFlagsManager } from '#lib/managers/feature-flags-manager.svelte.ts';
   import { queueManager } from '#lib/managers/queue-manager.svelte.ts';
   import { createPreloadedQuery } from '#lib/queries/client.ts';
   import { getUserConfigQuery } from '#lib/queries/config-user.query.ts';
@@ -63,7 +64,7 @@
     [QueueName.NsfwDetection]: {
       allText: $t('all'),
       missingText: $t('missing'),
-      disabled: !featureFlags.smartSearch, // scores the Smart Search embeddings
+      disabled: !featureFlagsManager.value.smartSearch, // scores the Smart Search embeddings
     },
     [QueueName.FaceDetection]: {
       allText: $t('reset'),

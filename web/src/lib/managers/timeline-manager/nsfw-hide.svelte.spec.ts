@@ -1,45 +1,65 @@
+import { nsfwMode } from '#lib/stores/nsfw.store.ts';
+import { test } from '#test/unit/fixtures.ts';
+import type { Mock } from '#test/unit/mocks/mock.ts';
+import type { TimeBucketAssetResponseDto } from '@immich/sdk';
 import { tick } from 'svelte';
-import { sdkMock } from '$lib/__mocks__/sdk.mock';
-import { nsfwMode } from '$lib/stores/nsfw.store';
-import { timelineAssetFactory, toResponseDto } from '@test-data/factories/asset-factory';
-import { TimelineManager } from './timeline-manager.svelte';
+import { expect } from 'vitest';
+import { TimelineManager } from './timeline-manager.svelte.ts';
 
-// Fork addition (see FORK.md)
-describe('TimelineManager NSFW hide mode', () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-    sdkMock.getTimeBuckets.mockResolvedValue([{ count: 1, timeBucket: '2024-01-01' }]);
-    sdkMock.getTimeBucket.mockResolvedValue(toResponseDto(...timelineAssetFactory.buildList(1)));
+// Fork addition (see FORK.md): in hide mode the timeline asks the server to exclude NSFW assets.
+const timeBucket = '2024-01-01T00:00:00.000Z';
+
+const bucket: TimeBucketAssetResponseDto = {
+  city: [],
+  country: [],
+  duration: [],
+  id: [],
+  visibility: [],
+  isFavorite: [],
+  isImage: [],
+  isTrashed: [],
+  isNsfw: [],
+  livePhotoVideoId: [],
+  fileCreatedAt: [],
+  localOffsetHours: [],
+  createdAt: [],
+  ownerId: [],
+  projectionType: [],
+  ratio: [],
+  stack: [],
+  thumbhash: [],
+};
+
+const load = async (api: Mock['api']) => {
+  api.on({
+    getTimeBuckets: () => ({ json: [{ count: 1, timeBucket }] }),
+    getTimeBucket: () => ({ json: bucket }),
   });
 
-  afterEach(() => {
+  const timelineManager = new TimelineManager();
+  await timelineManager.updateViewport({ width: 1588, height: 1000 });
+  await tick();
+  await timelineManager.loadTimelineMonth({ year: 2024, month: 1 });
+};
+
+describe('TimelineManager NSFW hide mode (fork)', () => {
+  test.afterEach(() => {
     nsfwMode.set('show');
   });
 
-  const load = async () => {
-    const timelineManager = new TimelineManager();
-    await timelineManager.updateViewport({ width: 1588, height: 1000 });
-    await tick();
-    await timelineManager.loadTimelineMonth({ year: 2024, month: 1 });
-  };
-
-  it('asks the server to exclude NSFW assets in hide mode', async () => {
+  test('asks the server to exclude NSFW assets in hide mode', async ({ api }) => {
     nsfwMode.set('hide');
-    await load();
-    expect(sdkMock.getTimeBuckets).toHaveBeenCalledWith(expect.objectContaining({ withoutNsfw: true }));
-    expect(sdkMock.getTimeBucket).toHaveBeenCalledWith(
-      expect.objectContaining({ withoutNsfw: true }),
-      expect.anything(),
-    );
+    await load(api);
+    expect(api.getTimeBuckets).toHaveBeenCalledWith({ params: expect.objectContaining({ withoutNsfw: true }) });
+    expect(api.getTimeBucket).toHaveBeenCalledWith({ params: expect.objectContaining({ withoutNsfw: true }) });
   });
 
-  it.each(['show', 'blur'] as const)('does not filter in %s mode', async (mode) => {
-    nsfwMode.set(mode);
-    await load();
-    expect(sdkMock.getTimeBuckets).toHaveBeenCalledWith(expect.not.objectContaining({ withoutNsfw: true }));
-    expect(sdkMock.getTimeBucket).toHaveBeenCalledWith(
-      expect.not.objectContaining({ withoutNsfw: true }),
-      expect.anything(),
-    );
-  });
+  for (const mode of ['show', 'blur'] as const) {
+    test(`does not filter in ${mode} mode`, async ({ api }) => {
+      nsfwMode.set(mode);
+      await load(api);
+      expect(api.getTimeBuckets.calls.every((call) => call.params?.withoutNsfw !== true)).toBe(true);
+      expect(api.getTimeBucket.calls.every((call) => call.params?.withoutNsfw !== true)).toBe(true);
+    });
+  }
 });
