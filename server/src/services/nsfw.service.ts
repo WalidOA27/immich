@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { JobOf } from 'src/types.js';
 import { OnEvent, OnJob } from 'src/decorators.js';
 import { SystemConfig } from 'src/dtos/config.dto.js';
 import { AssetType, AssetVisibility, JobName, JobStatus, QueueName } from 'src/enum.js';
@@ -15,6 +14,7 @@ import {
   scoreNsfw,
 } from 'src/nsfw/nsfw.js';
 import { BaseService } from 'src/services/base.service.js';
+import type { JobOf } from 'src/types.js';
 import { batched, isSmartSearchEnabled } from 'src/utils/misc.js';
 
 // Fork addition (see FORK.md): scores assets for NSFW content from their existing CLIP embedding.

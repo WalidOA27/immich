@@ -5,6 +5,7 @@ import { getUserConfigQuery } from '#lib/queries/config-user.query.ts';
 import { test } from '#test/unit/fixtures.ts';
 import { renderWithTooltips } from '#test/unit/helpers.ts';
 import { QueueCommand, QueueName, type QueueResponseDto } from '@immich/sdk';
+import { tick } from 'svelte';
 import QueuePanel from './QueuePanel.svelte';
 
 vi.mock('#lib/managers/queue-manager.svelte.ts', () => ({
@@ -55,7 +56,8 @@ test.describe('QueuePanel NSFW Detection card (fork)', () => {
     const { baseElement } = await renderWithTooltips(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
     const buttons = [...nsfwCard(baseElement).querySelectorAll('button')];
     const missing = buttons.find((button) => button.textContent?.includes('missing'))!;
-    await missing.click();
+    missing.click();
+    await tick();
     expect(api.runQueueCommandLegacy).toHaveBeenCalledWith({
       params: { name: QueueName.NsfwDetection },
       body: { command: QueueCommand.Start, force: false },
@@ -66,7 +68,8 @@ test.describe('QueuePanel NSFW Detection card (fork)', () => {
     const { baseElement } = await renderWithTooltips(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
     const buttons = [...nsfwCard(baseElement).querySelectorAll('button')];
     const all = buttons.find((button) => button.textContent?.includes('all'))!;
-    await all.click();
+    all.click();
+    await tick();
     expect(api.runQueueCommandLegacy).toHaveBeenCalledWith({
       params: { name: QueueName.NsfwDetection },
       body: { command: QueueCommand.Start, force: true },

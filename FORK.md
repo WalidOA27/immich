@@ -49,7 +49,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts`, `internal/load-support.svelte.ts` | `withoutNsfw` in hide mode |
 | `web/src/lib/services/queue.service.ts`, `web/src/routes/admin/system-settings/JobSettings.svelte` | Queue entry in Job Queues / title map |
 | `web/src/routes/admin/queues/QueuePanel.svelte` | NSFW Detection card (All / Missing) in the Queues page, next to Duplicate Detection |
-| `web/src/test-data/factories/asset-factory.ts` | `isNsfw` in the bucket response factory |
+| `web/test/common/data.ts` | `isNsfw` in the bucket response factory (v3.4.1 moved it here from `web/src/test-data/factories/asset-factory.ts`) |
 | `i18n/en.json`, `i18n/es.json` | 5 keys each |
 | `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
 
