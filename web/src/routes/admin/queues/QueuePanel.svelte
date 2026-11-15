@@ -60,6 +60,11 @@
       missingText: $t('missing'),
       disabled: !machineLearning.duplicateDetection.enabled,
     },
+    [QueueName.NsfwDetection]: {
+      allText: $t('all'),
+      missingText: $t('missing'),
+      disabled: !machineLearning.clip.enabled, // scores the Smart Search embeddings
+    },
     [QueueName.FaceDetection]: {
       allText: $t('reset'),
       refreshText: $t('refresh'),
