@@ -126,14 +126,6 @@ from
   "tag"
 where
   "id" = $1
-update "tag"
-set
-  "value" = $1,
-  "color" = $2
-where
-  "id" = $3
-returning
-  *
 rollback
 
 -- TagRepository.delete
@@ -167,11 +159,4 @@ begin
 delete from "tag_asset"
 where
   "assetId" = $1
-insert into
-  "tag_asset" ("tagId", "assetId")
-values
-  ($1, $2)
-on conflict do nothing
-returning
-  *
 rollback
