@@ -1,6 +1,6 @@
 # Detección NSFW en Immich (fork mínimo) — diseño
 
-Fecha: 2026-11-08 · Base: Immich `v3.3.6` · Rama: `nsfw` en `WalidOA27/immich`
+Fecha: 2026-11-08 · Base: Immich `v3.4.1` · Rama: `nsfw` en `WalidOA27/immich`
 
 ## Intención
 
@@ -107,7 +107,7 @@ esfuerzo. Cada decisión de abajo prioriza "menos líneas tocadas en código de 
 
 ### Despliegue
 
-- La base es v3.3.6, así que desplegar el fork incluye actualizar el homelab de 3.0.3 a 3.3.6
+- La base es v3.4.1, así que desplegar el fork incluye actualizar el homelab de 3.0.3 a 3.4.1
   (copia de la base de datos antes).
 - Solo cambia la imagen del servidor; la de ML sigue siendo la oficial.
 

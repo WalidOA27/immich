@@ -29,6 +29,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/lib/components/assets/thumbnail/__test__/nsfw-blur.spec.ts`, `web/src/lib/managers/timeline-manager/nsfw-hide.svelte.spec.ts`, `web/src/routes/admin/queues/QueuePanel.nsfw.spec.ts` | Web tests (the last one: NSFW Detection card in Admin > Queues with All / Missing) |
 | `docs/superpowers/specs/2026-11-08-nsfw-design.md`, `docs/superpowers/plans/2026-11-08-nsfw.md`, `docs/superpowers/specs/2026-11-08-maintainer-design.md`, `docs/superpowers/plans/2026-11-08-maintainer.md` | Design specs and plans |
 | `server/src/nsfw/nsfw.sql.ts` | `isNsfwAsset(threshold)` SQL fragment (tolerates malformed metadata) |
+| `packages/plugin-sdk/dist/index.js`, `packages/plugin-sdk/dist/index.d.ts`, `packages/plugin-sdk/dist/host-functions.d.ts`, `packages/plugin-sdk/dist/sdk.d.ts`, `packages/plugin-sdk/dist/types.d.ts`, `packages/sdk/build/index.d.ts`, `packages/sdk/build/fetch-client.d.ts`, `packages/sdk/build/fetch-errors.d.ts` | Vendored build outputs of upstream `@immich/plugin-sdk` / `@immich/sdk` so a cold `cd server && pnpm build` works before the workspace packages are built; `verify.sh` rebuilds both from source |
 
 ## Immich files modified
 
@@ -49,9 +50,10 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts`, `internal/load-support.svelte.ts` | `withoutNsfw` in hide mode |
 | `web/src/lib/services/queue.service.ts`, `web/src/routes/admin/system-settings/JobSettings.svelte` | Queue entry in Job Queues / title map |
 | `web/src/routes/admin/queues/QueuePanel.svelte` | NSFW Detection card (All / Missing) in the Queues page, next to Duplicate Detection |
-| `web/src/test-data/factories/asset-factory.ts` | `isNsfw` in the bucket response factory |
+| `web/src/lib/managers/timeline-manager/timeline-manager.svelte.spec.ts`, `web/test/common/data.ts`, `web/test/common/payloads.ts` | `isNsfw` / `nsfwDetection` in upstream bucket and queue test fixtures (required by the new DTO fields) |
 | `i18n/en.json`, `i18n/es.json` | 5 keys each |
 | `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
+| `server/test/medium/globalSetup.ts` | Connect to the container host from `testcontainers` instead of `localhost`, so medium tests also work when Docker is remote (`DOCKER_HOST`, as in the gates) |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)
 
@@ -71,7 +73,7 @@ upstream.
 ```bash
 export MISE_LOCKED=1            # mise must not rewrite mise.lock
 git fetch upstream --tags
-git rebase --onto vX.Y.Z v3.3.6 nsfw   # replace v3.3.6 with the previous base tag
+git rebase --onto vX.Y.Z v3.4.1 nsfw   # replace v3.4.1 with the previous base tag
 # on conflicts in generated files: take upstream's version, finish the rebase, then regenerate them
 mise install node pnpm npm:oazapfts && mise exec -- pnpm install --frozen-lockfile
 misc/nsfw/verify.sh
