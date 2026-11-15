@@ -26,7 +26,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `server/src/services/nsfw.service.ts`, `nsfw.service.spec.ts` | NSFW Detection queue handlers; warns at startup on invalid `IMMICH_NSFW_THRESHOLD` |
 | `web/src/lib/stores/nsfw.store.ts` | Persisted mode `nsfw-mode`: `show` / `blur` / `hide` |
 | `web/src/lib/components/shared-components/NsfwToggle.svelte` | 3-state toggle (reloads when entering/leaving hide) |
-| `web/src/lib/components/assets/thumbnail/__test__/nsfw-blur.spec.ts`, `web/src/lib/managers/timeline-manager/nsfw-hide.svelte.spec.ts` | Web tests |
+| `web/src/lib/components/assets/thumbnail/__test__/nsfw-blur.spec.ts`, `web/src/lib/managers/timeline-manager/nsfw-hide.svelte.spec.ts`, `web/src/routes/admin/queues/QueuePanel.nsfw.spec.ts` | Web tests (the last one: NSFW Detection card in Admin > Queues with All / Missing) |
 | `docs/superpowers/specs/2026-11-08-nsfw-design.md`, `docs/superpowers/plans/2026-11-08-nsfw.md`, `docs/superpowers/specs/2026-11-08-maintainer-design.md`, `docs/superpowers/plans/2026-11-08-maintainer.md` | Design specs and plans |
 | `server/src/nsfw/nsfw.sql.ts` | `isNsfwAsset(threshold)` SQL fragment (tolerates malformed metadata) |
 
