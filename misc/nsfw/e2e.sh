@@ -98,6 +98,23 @@ job nsfwDetection false || fail missing "job trigger"
 sleep 3; queue_idle || fail missing "queue did not go idle"
 mid=$(db -c "$q") || fail missing "cannot read updatedAt"
 [[ "$before" == "$mid" ]] || fail missing "updatedAt changed: $before -> $mid"
+
+# Backfill: a library that existed before the fork has embeddings but no scores. "Missing" (the button in
+# Admin > Queues) must score exactly those.
+echo "== backfill (Missing scores assets that have an embedding but no score)"
+db -c "delete from asset_metadata where key='nsfw' and \"assetId\" in
+  (select \"assetId\" from asset_metadata where key='nsfw' order by \"assetId\" limit 3)" >/dev/null || fail backfill "db write"
+[[ "$(db -c "select count(*) from asset_metadata where key='nsfw'")" == "$((total - 3))" ]] || fail backfill "rows not removed"
+job nsfwDetection false || fail backfill "job trigger"
+filled=no
+for _ in $(seq 45); do
+  [[ "$(db -c "select count(*) from asset_metadata where key='nsfw'")" == "$total" ]] && { filled=yes; break; }
+  sleep 2
+done
+[[ "$filled" == yes ]] || fail backfill "Missing left $(( total - $(db -c "select count(*) from asset_metadata where key='nsfw'") )) of 3 unscored"
+queue_idle || fail backfill "queue did not go idle"
+mid=$(db -c "$q") || fail backfill "cannot read updatedAt"
+
 job nsfwDetection true || fail all "job trigger"
 advanced=no
 for _ in $(seq 45); do
