@@ -4,8 +4,17 @@ import { render } from 'vitest-browser-svelte';
 import Thumbnail from '#lib/components/assets/thumbnail/Thumbnail.svelte';
 
 vi.mock('#lib/utils/navigation.ts', () => ({
-  currentUrlReplaceAssetId: vi.fn(),
+  currentUrlReplaceAssetId: vi.fn((assetId: string) => `/photos/${assetId}`),
   isSharedLinkRoute: vi.fn().mockReturnValue(false),
+  isPhotosRoute: vi.fn().mockReturnValue(false),
+  isAlbumsRoute: vi.fn().mockReturnValue(false),
+  isPeopleRoute: vi.fn().mockReturnValue(false),
+  isLockedFolderRoute: vi.fn().mockReturnValue(false),
+  isAssetViewerRoute: vi.fn().mockReturnValue(false),
+  getAssetInfoFromParam: vi.fn().mockResolvedValue(undefined),
+  navigate: vi.fn().mockResolvedValue(undefined),
+  clearQueryParam: vi.fn().mockResolvedValue(undefined),
+  setQueryValue: vi.fn().mockResolvedValue(undefined),
 }));
 
 const renderWith = async (isNsfw: boolean) => {

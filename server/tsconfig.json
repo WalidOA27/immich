@@ -19,6 +19,7 @@
     "esModuleInterop": true,
     "preserveWatchOutput": true,
     "paths": {
+      "@immich/plugin-sdk": ["./src/types/plugin-sdk.ts"],
       "src/*": ["./src/*"],
       "test/*": ["./test/*"]
     },

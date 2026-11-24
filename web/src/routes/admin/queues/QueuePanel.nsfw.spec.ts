@@ -5,12 +5,19 @@ import { renderWithTooltips as render } from '#test/unit/helpers.ts';
 import QueuePanel from './QueuePanel.svelte';
 
 const config = vi.hoisted(() => ({
-  value: { machineLearning: { clip: { enabled: true }, duplicateDetection: { enabled: true } } },
+  value: {
+    machineLearning: {
+      clip: { enabled: true },
+      duplicateDetection: { enabled: true },
+      facialRecognition: { enabled: true },
+      ocr: { enabled: true },
+    },
+  },
 }));
 
 vi.mock(import('#lib/queries/client.ts'), async (importOriginal) => {
   const actual = await importOriginal();
-  return { ...actual, createPreloadedQuery: () => ({ data: config.value }) };
+  return { ...actual, createPreloadedQuery: () => ({ data: config.value }) as never };
 });
 
 vi.mock(import('#lib/managers/queue-manager.svelte.ts'), function () {
@@ -42,7 +49,14 @@ const buttonLabels = (root: ParentNode) =>
 
 describe('QueuePanel NSFW Detection card (fork)', () => {
   beforeEach(() => {
-    config.value = { machineLearning: { clip: { enabled: true }, duplicateDetection: { enabled: true } } };
+    config.value = {
+      machineLearning: {
+        clip: { enabled: true },
+        duplicateDetection: { enabled: true },
+        facialRecognition: { enabled: true },
+        ocr: { enabled: true },
+      },
+    };
     vi.mocked(runQueueCommandLegacy).mockClear();
   });
 
@@ -97,7 +111,14 @@ describe('QueuePanel NSFW Detection card (fork)', () => {
   });
 
   it('is disabled when Smart Search is off (it scores Smart Search embeddings)', async () => {
-    config.value = { machineLearning: { clip: { enabled: false }, duplicateDetection: { enabled: true } } };
+    config.value = {
+      machineLearning: {
+        clip: { enabled: false },
+        duplicateDetection: { enabled: true },
+        facialRecognition: { enabled: true },
+        ocr: { enabled: true },
+      },
+    };
     const { baseElement } = await render(QueuePanel, { queues: [idle(QueueName.NsfwDetection)] });
     const card = nsfwCard(baseElement);
     expect(buttonLabels(card)).toContain('disabled');

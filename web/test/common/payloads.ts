@@ -300,6 +300,7 @@ const queues = (): ResponseOf<'getQueuesLegacy'> => ({
   library: idleQueue(),
   metadataExtraction: idleQueue(),
   migration: idleQueue(),
+  nsfwDetection: idleQueue(),
   notifications: idleQueue(),
   ocr: idleQueue(),
   search: idleQueue(),

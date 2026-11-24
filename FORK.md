@@ -29,6 +29,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/lib/components/assets/thumbnail/__test__/nsfw-blur.spec.ts`, `web/src/lib/managers/timeline-manager/nsfw-hide.svelte.spec.ts`, `web/src/routes/admin/queues/QueuePanel.nsfw.spec.ts` | Web tests (the last one: NSFW Detection card in Admin > Queues with All / Missing) |
 | `docs/superpowers/specs/2026-11-08-nsfw-design.md`, `docs/superpowers/plans/2026-11-08-nsfw.md`, `docs/superpowers/specs/2026-11-08-maintainer-design.md`, `docs/superpowers/plans/2026-11-08-maintainer.md` | Design specs and plans |
 | `server/src/nsfw/nsfw.sql.ts` | `isNsfwAsset(threshold)` SQL fragment (tolerates malformed metadata) |
+| `server/src/types/plugin-sdk.ts` | Local copy of `@immich/plugin-sdk`'s public surface (types + `WorkflowTrigger`), so the server builds and starts when the workspace package has not been built (standalone build, e.g. generated-file regeneration) |
 
 ## Immich files modified
 
@@ -47,10 +48,13 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/lib/components/shared-components/navigation-bar/NavigationBar.svelte` | `<NsfwToggle />` before the theme button |
 | `web/src/lib/managers/timeline-manager/types.ts`, `timeline-month.svelte.ts` | `isNsfw` on `TimelineAsset`, mapped from the bucket |
 | `web/src/lib/managers/timeline-manager/timeline-manager.svelte.ts`, `internal/load-support.svelte.ts` | `withoutNsfw` in hide mode |
+| `web/src/lib/managers/timeline-manager/timeline-manager.svelte.spec.ts` | `isNsfw` in the bucket response fixture |
+| `web/test/common/data.ts`, `web/test/common/payloads.ts` | `isNsfw` in the bucket fixture; `nsfwDetection` in the legacy queues fixture |
 | `web/src/lib/services/queue.service.ts`, `web/src/routes/admin/system-settings/JobSettings.svelte` | Queue entry in Job Queues / title map |
 | `web/src/routes/admin/queues/QueuePanel.svelte` | NSFW Detection card (All / Missing) in the Queues page, next to Duplicate Detection |
 | `i18n/en.json`, `i18n/es.json` | 5 keys each |
 | `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
+| `server/tsconfig.json` | Map `@immich/plugin-sdk` to the local `src/types/plugin-sdk.ts`, so the server compiles and runs without the workspace package being built first |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)
 
