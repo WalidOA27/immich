@@ -54,6 +54,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 | `web/src/routes/admin/queues/QueuePanel.svelte` | NSFW Detection card (All / Missing) in the Queues page, next to Duplicate Detection |
 | `i18n/en.json`, `i18n/es.json` | 5 keys each |
 | `server/test/medium/specs/services/timeline.service.spec.ts` | `isNsfw: []` in the empty-bucket expectation; NSFW block at the end |
+| `server/test/medium/globalSetup.ts` | Connect to the `testcontainers` host instead of `localhost`, so medium tests also work with a remote Docker daemon (as in the gates) |
 | `server/tsconfig.json` | Map `@immich/plugin-sdk` to the local `src/types/plugin-sdk.ts`, so the server compiles and runs without the workspace package being built first |
 
 ## Generated files (regenerate, never hand-edit or hand-merge)
@@ -67,7 +68,7 @@ existing `asset_metadata` table (key `nsfw`), so switching back to the official 
 ```bash
 export MISE_LOCKED=1            # mise must not rewrite mise.lock
 git fetch upstream --tags
-git rebase --onto vX.Y.Z v3.3.6 nsfw   # replace v3.3.6 with the previous base tag
+git rebase --onto vX.Y.Z v3.4.2 nsfw   # replace v3.4.2 with the previous base tag
 # on conflicts in generated files: take upstream's version, finish the rebase, then regenerate them
 mise install node pnpm npm:oazapfts && mise exec -- pnpm install --frozen-lockfile
 misc/nsfw/verify.sh
