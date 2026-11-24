@@ -1,6 +1,6 @@
 # Immich NSFW fork
 
-Base: v3.3.6
+Base: v3.4.2
 
 This branch (`nsfw`) adds NSFW detection to Immich with the smallest possible diff, so it can be rebased onto
 every upstream release. Design: `docs/superpowers/specs/2026-11-08-nsfw-design.md`. Plan:

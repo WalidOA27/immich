@@ -99,7 +99,7 @@ delete from "asset_metadata"
 where
   "assetId" = $1
   and "key" = $2
-commit
+rollback
 
 -- AssetRepository.getByDayOfYear
 with
@@ -548,10 +548,7 @@ declare offline_check no scroll cursor for (
     and "asset"."isOffline" = $2
     and "asset"."isExternal" = $3
 )
-fetch 10000
-from
-  offline_check
-commit
+rollback
 
 -- AssetRepository.filterNewExternalAssetPaths
 select
