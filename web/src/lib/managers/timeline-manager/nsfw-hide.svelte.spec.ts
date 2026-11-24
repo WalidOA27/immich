@@ -1,11 +1,24 @@
+import { nsfwMode } from '#lib/stores/nsfw.store.ts';
 import { fromTimelinePlainDateTime } from '#lib/utils/timeline-util.ts';
 import { factory } from '#test/unit/factories.ts';
 import type { TimeBucketAssetResponseDto } from '@immich/sdk';
 import { tick } from 'svelte';
-import { sdkMock } from '$lib/__mocks__/sdk.mock';
-import { nsfwMode } from '$lib/stores/nsfw.store';
+import type { MockedObject } from 'vitest';
 import { TimelineManager } from './timeline-manager.svelte';
 import type { TimelineAsset } from './types';
+
+vi.mock('@immich/sdk', async (importOriginal) => {
+  const module = await importOriginal<typeof import('@immich/sdk')>();
+  const mocks = Object.fromEntries(
+    Object.entries(module)
+      .filter(([, value]) => typeof value === 'function')
+      .map(([key]) => [key, vi.fn()]),
+  );
+  const mock = { ...module, ...mocks };
+  return { ...mock, default: mock };
+});
+
+const sdkMock = (await import('@immich/sdk')) as unknown as MockedObject<typeof import('@immich/sdk')>;
 
 const toResponseDto = (...timelineAsset: TimelineAsset[]) => {
   const bucketAssets: TimeBucketAssetResponseDto = {

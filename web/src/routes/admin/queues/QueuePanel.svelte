@@ -63,7 +63,7 @@
     [QueueName.NsfwDetection]: {
       allText: $t('all'),
       missingText: $t('missing'),
-      disabled: !featureFlags.smartSearch, // scores the Smart Search embeddings
+      disabled: !machineLearning.clip.enabled, // scores the Smart Search embeddings
     },
     [QueueName.FaceDetection]: {
       allText: $t('reset'),
